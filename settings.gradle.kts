@@ -17,4 +17,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "serde-with-kotlin"
-

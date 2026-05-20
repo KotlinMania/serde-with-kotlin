@@ -9,7 +9,7 @@ name: "CodeQL Advanced"
 #
 # Three matrix entries cover the languages CodeQL detects in this repo:
 #   - actions             (source-only)
-#   - java-kotlin         (manual build via Android/JS/Wasm compilation — see note)
+#   - java-kotlin         (manual build via compileAndroidMain - see note)
 #   - javascript-typescript (source-only)
 #
 # For java-kotlin, the matrix-shared `Initialize CodeQL -> Perform CodeQL
@@ -20,15 +20,16 @@ name: "CodeQL Advanced"
 #   2. A `./gradlew setupAndroidSdk compileAndroidMain compileKotlinJs
 #      compileKotlinWasmJs` invocation under the CodeQL build tracer.
 #
-# This is a strict-KMP project, so the autobuild default for java-kotlin
-# (`./gradlew testClasses`) is not the build surface we need to scan.
-# The `com.android.kotlin.multiplatform.library` plugin runs JVM kotlinc for
-# the Android target and emits real `.class` files under
-# `build/classes/kotlin/android/main`, which is the useful java-kotlin
-# extraction surface. `setupAndroidSdk` runs first so the Android target is
-# configured from the normalized Gradle-owned SDK installer. `compileKotlinJs`
-# and `compileKotlinWasmJs` are included with the same manual build so the
-# CodeQL tracer sees the web Kotlin compilers too.
+# This repo is normalized around Kotlin 2.3.21. The autobuild default for
+# java-kotlin (`./gradlew testClasses`) is not the build surface we need to
+# scan, and metadata-only KMP compilation does not give CodeQL useful JVM
+# bytecode. The Android target runs the JVM Kotlin compiler path and emits
+# real `.class` files under `build/classes/kotlin/android/main`, so
+# `compileAndroidMain` carries the java-kotlin extraction. `setupAndroidSdk`
+# runs first so the Android target is configured from the normalized
+# Gradle-owned SDK installer. `compileKotlinJs` and `compileKotlinWasmJs`
+# are included with the same manual build so the tracer can observe those
+# compiler invocations too.
 
 on:
   schedule:
@@ -91,9 +92,10 @@ jobs:
           dependency-caching: true
 
       # Manual build: only java-kotlin gates this. `Initialize CodeQL`
-      # above installs the build tracer into the environment; the Gradle
-      # invocation below runs Android plus JS/Wasm Kotlin compilers after the
+      # above installs the build tracer into the environment; this Gradle
+      # invocation runs Android plus JS/Wasm Kotlin compilers after the
       # normalized project-local SDK setup task has refreshed local.properties.
+      # The flags force fresh compiler invocations that CodeQL can observe.
       - name: Run manual build steps
         if: matrix.build-mode == 'manual'
         run: |

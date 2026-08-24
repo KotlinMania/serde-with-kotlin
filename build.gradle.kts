@@ -426,8 +426,10 @@ kotlin {
     mingwX64 { configureBenchmarkCompilation() }
 
     // Android NDK — always built (full target surface, no opt-in gate).
+    androidNativeArm32 { configureBenchmarkCompilation() }
     androidNativeArm64 { configureBenchmarkCompilation() }
     androidNativeX64 { configureBenchmarkCompilation() }
+    androidNativeX86 { configureBenchmarkCompilation() }
 
     // Web
     js {
@@ -709,8 +711,7 @@ mavenPublishing {
 tasks.register("test") {
     group = "verification"
     description = "Runs the commonTest-backed KMP suite, Android host tests, and Swift Export smoke test."
-    dependsOn("allTests")
-    dependsOn("testAndroidHostTest")
+    dependsOn("hostTests")
     dependsOn("swiftExportSmokeTest")
 }
 
@@ -734,6 +735,29 @@ tasks.register("hostTests") {
         "wasmWasiNodeTest",
         "testAndroidHostTest",
     )
+}
+
+tasks.matching { it.name.endsWith("GenerateSPMPackage") }.configureEach {
+    doLast {
+        val spmPackageDir =
+            layout.buildDirectory
+                .dir("SPMPackage")
+                .get()
+                .asFile
+        if (spmPackageDir.exists()) {
+            spmPackageDir.walkTopDown().filter { it.name == "Package.swift" }.forEach { packageSwift ->
+                val text = packageSwift.readText()
+                if (!text.contains("platforms:")) {
+                    packageSwift.writeText(
+                        text.replaceFirst(
+                            Regex("""(Package\(\s*name:\s*"[^"]*",)"""),
+                            "$1\n    platforms: [.macOS(.v14)],",
+                        ),
+                    )
+                }
+            }
+        }
+    }
 }
 
 // Swift Export smoke test — produces the SPM package via embedSwiftExportForXcode
@@ -788,8 +812,8 @@ tasks.register("swiftExportSmokeTest") {
             if (!text.contains("platforms:")) {
                 generatedPackageSwift.writeText(
                     text.replaceFirst(
-                        Regex("(name:\\s*\"[^\"]*\",)"),
-                        "\$1\n    platforms: [.macOS(.v14)],",
+                        Regex("""(Package\(\s*name:\s*"[^"]*",)"""),
+                        "$1\n    platforms: [.macOS(.v14)],",
                     ),
                 )
             }
@@ -820,8 +844,10 @@ tasks.register("swiftExportSmokeTest") {
 // ============================================================================
 val nativeTargetNames =
     listOf(
+        "androidNativeArm32",
         "androidNativeArm64",
         "androidNativeX64",
+        "androidNativeX86",
         "iosArm64",
         "iosSimulatorArm64",
         "iosX64",

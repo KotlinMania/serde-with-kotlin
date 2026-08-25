@@ -1,32 +1,9 @@
 # port-lint Proposed Changes
 
 **Generated:** 2026-08-24
-**Source:** tmp/serde_with
-**Target:** src
+**Source:** tmp/serde_with/src
+**Target:** src/commonMain/kotlin
 
 These are review proposals only. They are emitted when a Rust -> Kotlin pair matches only after fallback normalization, so the existing `port-lint` header is not an exact provenance match.
 
-| Target file | Current header | Proposed header | Source path | Reason |
-|-------------|----------------|-----------------|-------------|--------|
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Json.kt` | `// port-lint: source json.rs` | `// port-lint: source json.rs` | `json.rs` | `port-lint provenance header matched only after fallback normalization: 'json.rs' vs expected 'json.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/EnumMap.kt` | `// port-lint: source enum_map.rs` | `// port-lint: source enum_map.rs` | `enum_map.rs` | `port-lint provenance header matched only after fallback normalization: 'enum_map.rs' vs expected 'enum_map.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/KeyValueMap.kt` | `// port-lint: source key_value_map.rs` | `// port-lint: source key_value_map.rs` | `key_value_map.rs` | `port-lint provenance header matched only after fallback normalization: 'key_value_map.rs' vs expected 'key_value_map.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/WithSuffix.kt` | `// port-lint: source with_suffix.rs` | `// port-lint: source with_suffix.rs` | `with_suffix.rs` | `port-lint provenance header matched only after fallback normalization: 'with_suffix.rs' vs expected 'with_suffix.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/WithPrefix.kt` | `// port-lint: source with_prefix.rs` | `// port-lint: source with_prefix.rs` | `with_prefix.rs` | `port-lint provenance header matched only after fallback normalization: 'with_prefix.rs' vs expected 'with_prefix.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Duration.kt` | `// port-lint: source utils/duration.rs` | `// port-lint: source utils/duration.rs` | `utils/duration.rs` | `port-lint provenance header matched only after fallback normalization: 'utils/duration.rs' vs expected 'utils/duration.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/BoolFromInt.kt` | `// port-lint: source lib.rs` | `// port-lint: source tests/serde_as/lib.rs` | `tests/serde_as/lib.rs` | `port-lint provenance header matched only by basename: 'lib.rs' vs expected 'tests/serde_as/lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Mod.kt` | `// port-lint: source lib.rs` | `// port-lint: source lib.rs` | `lib.rs` | `port-lint provenance header matched only after fallback normalization: 'lib.rs' vs expected 'lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/DefaultOnError.kt` | `// port-lint: source lib.rs` | `// port-lint: source lib.rs` | `lib.rs` | `port-lint provenance header matched only after fallback normalization: 'lib.rs' vs expected 'lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/DisplayFromStr.kt` | `// port-lint: source lib.rs` | `// port-lint: source lib.rs` | `lib.rs` | `port-lint provenance header matched only after fallback normalization: 'lib.rs' vs expected 'lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/NoneAsEmptyString.kt` | `// port-lint: source lib.rs` | `// port-lint: source lib.rs` | `lib.rs` | `port-lint provenance header matched only after fallback normalization: 'lib.rs' vs expected 'lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/StringWithSeparator.kt` | `// port-lint: source lib.rs` | `// port-lint: source lib.rs` | `lib.rs` | `port-lint provenance header matched only after fallback normalization: 'lib.rs' vs expected 'lib.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/FlattenMaybe.kt` | `// port-lint: source flatten_maybe.rs` | `// port-lint: source flatten_maybe.rs` | `flatten_maybe.rs` | `port-lint provenance header matched only after fallback normalization: 'flatten_maybe.rs' vs expected 'flatten_maybe.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Base64.kt` | `// port-lint: source base64.rs` | `// port-lint: source base64.rs` | `base64.rs` | `port-lint provenance header matched only after fallback normalization: 'base64.rs' vs expected 'base64.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/SkipError.kt` | `// port-lint: source de/skip_error.rs` | `// port-lint: source de/skip_error.rs` | `de/skip_error.rs` | `port-lint provenance header matched only after fallback normalization: 'de/skip_error.rs' vs expected 'de/skip_error.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/PrefixSuffix.kt` | `// port-lint: source with_prefix.rs` | `// port-lint: source tests/with_prefix.rs` | `tests/with_prefix.rs` | `port-lint provenance header matched only by basename: 'with_prefix.rs' vs expected 'tests/with_prefix.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Rust.kt` | `// port-lint: source rust.rs` | `// port-lint: source rust.rs` | `rust.rs` | `port-lint provenance header matched only after fallback normalization: 'rust.rs' vs expected 'rust.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Hex.kt` | `// port-lint: source hex.rs` | `// port-lint: source hex.rs` | `hex.rs` | `port-lint provenance header matched only after fallback normalization: 'hex.rs' vs expected 'hex.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/Formats.kt` | `// port-lint: source formats.rs` | `// port-lint: source formats.rs` | `formats.rs` | `port-lint provenance header matched only after fallback normalization: 'formats.rs' vs expected 'formats.rs'` |
-| `commonTest/kotlin/io/github/kotlinmania/serdewith/FormatsTest.kt` | `// port-lint: source formats.rs` | `// port-lint: source formats.rs` | `formats.rs` | `port-lint provenance header matched only after fallback normalization: 'formats.rs' vs expected 'formats.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/DuplicateKey.kt` | `// port-lint: source duplicate_key_impls/mod.rs` | `// port-lint: source duplicate_key_impls/mod.rs` | `duplicate_key_impls/mod.rs` | `port-lint provenance header matched only after fallback normalization: 'duplicate_key_impls/mod.rs' vs expected 'duplicate_key_impls/mod.rs'` |
-| `commonMain/kotlin/io/github/kotlinmania/serdewith/OneOrMany.kt` | `// port-lint: source lib.rs` | `// port-lint: source tests/derives/lib.rs` | `tests/derives/lib.rs` | `port-lint provenance header matched only by basename: 'lib.rs' vs expected 'tests/derives/lib.rs'` |
+_No fallback provenance matches detected._

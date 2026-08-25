@@ -135,3 +135,75 @@ object TimestampMillisSerializer : KSerializer<Instant> {
 
     override fun deserialize(decoder: Decoder): Instant = Instant.fromEpochMilliseconds(decoder.decodeLong())
 }
+
+/**
+ * Sign of a duration or timestamp.
+ */
+enum class Sign {
+    Positive,
+    Negative,
+}
+
+/**
+ * Error during parsing floating-point seconds.
+ */
+sealed class ParseFloatError : Exception() {
+    data object InvalidValue : ParseFloatError()
+
+    data class Custom(override val message: String) : ParseFloatError()
+}
+
+/**
+ * Deconstructed time parts.
+ */
+data class TimeParts(
+    val sign: Sign,
+    val seconds: ULong,
+    val subseconds: UInt,
+)
+
+/**
+ * Parses a float string into sign, seconds, and subsecond nanoseconds.
+ */
+fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
+    var value = valueStr
+    val sign =
+        when {
+            value.startsWith('+') -> {
+                value = value.substring(1)
+                Sign.Positive
+            }
+            value.startsWith('-') -> {
+                value = value.substring(1)
+                Sign.Negative
+            }
+            else -> Sign.Positive
+        }
+
+    val parts = value.split('.')
+    return when (parts.size) {
+        1 -> {
+            val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
+            Result.success(TimeParts(sign, seconds, 0u))
+        }
+        2 -> {
+            val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
+            val subsecondsStr = parts[1]
+            if (subsecondsStr.length > 9) {
+                return Result.failure(
+                    ParseFloatError.Custom(
+                        "Duration and Timestamps with no more than 9 digits precision, but '$valueStr' has more",
+                    ),
+                )
+            }
+            var subseconds = subsecondsStr.toUIntOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
+            var multiplier = 1u
+            for (i in 0 until (9 - subsecondsStr.length)) {
+                multiplier *= 10u
+            }
+            subseconds *= multiplier
+            Result.success(TimeParts(sign, seconds, subseconds))
+        }
+        else -> Result.failure(ParseFloatError.InvalidValue)
+    }
+}

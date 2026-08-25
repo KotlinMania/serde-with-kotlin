@@ -53,3 +53,49 @@ class SetWithDuplicateStrategySerializer<T>(
         return result
     }
 }
+
+/**
+ * Serializer for [Map] that applies duplicate key handling strategies.
+ */
+class MapWithDuplicateStrategySerializer<K, V>(
+    private val keySerializer: KSerializer<K>,
+    private val valueSerializer: KSerializer<V>,
+    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
+) : KSerializer<Map<K, V>> {
+    private val mapSerializer = kotlinx.serialization.builtins.MapSerializer(keySerializer, valueSerializer)
+    override val descriptor: SerialDescriptor = mapSerializer.descriptor
+
+    override fun serialize(encoder: Encoder, value: Map<K, V>) {
+        mapSerializer.serialize(encoder, value)
+    }
+
+    override fun deserialize(decoder: Decoder): Map<K, V> {
+        val composite = decoder.beginStructure(descriptor)
+        val result = mutableMapOf<K, V>()
+        while (true) {
+            val keyIndex = composite.decodeElementIndex(descriptor)
+            if (keyIndex == kotlinx.serialization.encoding.CompositeDecoder.DECODE_DONE) break
+            val key = composite.decodeSerializableElement(descriptor, keyIndex, keySerializer)
+            val valIndex = composite.decodeElementIndex(descriptor)
+            val value = composite.decodeSerializableElement(descriptor, valIndex, valueSerializer)
+            when (strategy) {
+                DuplicateStrategy.ErrorOnDuplicate -> {
+                    if (result.containsKey(key)) {
+                        throw SerializationException("Duplicate key found in map: $key")
+                    }
+                    result[key] = value
+                }
+                DuplicateStrategy.FirstValueWins -> {
+                    if (!result.containsKey(key)) {
+                        result[key] = value
+                    }
+                }
+                DuplicateStrategy.LastValueWins -> {
+                    result[key] = value
+                }
+            }
+        }
+        composite.endStructure(descriptor)
+        return result
+    }
+}

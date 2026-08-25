@@ -1,3 +1,4 @@
+// port-lint: tests serde_as/default_on.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.builtins.serializer
@@ -8,17 +9,21 @@ import kotlin.test.assertEquals
 class DefaultOnErrorTest {
     @Test
     fun testDefaultOnError() {
-        val serializer = DefaultOnErrorSerializer(Int.serializer()) { -1 }
+        val serializer = DefaultOnErrorSerializer(Int.serializer()) { 0 }
 
-        assertEquals(42, Json.decodeFromString(serializer, "42"))
-        assertEquals(-1, Json.decodeFromString(serializer, "\"not-a-number\""))
+        assertEquals(123, Json.decodeFromString(serializer, "123"))
+        assertEquals(0, Json.decodeFromString(serializer, "0"))
+        assertEquals(0, Json.decodeFromString(serializer, "\"\""))
+        assertEquals(0, Json.decodeFromString(serializer, "\"12+3\""))
+        assertEquals(0, Json.decodeFromString(serializer, "\"abc\""))
     }
 
     @Test
     fun testDefaultOnNull() {
-        val serializer = DefaultOnNullSerializer(Int.serializer()) { 99 }
+        val serializer = DefaultOnNullSerializer(Int.serializer()) { 0 }
 
-        assertEquals(42, Json.decodeFromString(serializer, "42"))
-        assertEquals(99, Json.decodeFromString(serializer, "null"))
+        assertEquals(123, Json.decodeFromString(serializer, "123"))
+        assertEquals(0, Json.decodeFromString(serializer, "0"))
+        assertEquals(0, Json.decodeFromString(serializer, "null"))
     }
 }

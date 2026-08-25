@@ -40,6 +40,11 @@ object CryptAlphabet : Base64Alphabet {
     override val chars: String = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 }
 
+/** IMAP modified UTF-7 Base64 alphabet. */
+object ImapMutf7Alphabet : Base64Alphabet {
+    override val chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+,"
+}
+
 /**
  * Base64 encoding and decoding utilities.
  */
@@ -103,6 +108,22 @@ object Base64Codec {
         }
 
         val len = filtered.length
+        if (len % 4 == 1) {
+            throw IllegalArgumentException("Invalid Base64 length: $len")
+        }
+        val remainder = len % 4
+        if (remainder == 2) {
+            val c1 = decodeTable[filtered[len - 1].code]
+            if ((c1 and 0x0F) != 0) {
+                throw IllegalArgumentException("Invalid last symbol")
+            }
+        } else if (remainder == 3) {
+            val c2 = decodeTable[filtered[len - 1].code]
+            if ((c2 and 0x03) != 0) {
+                throw IllegalArgumentException("Invalid last symbol")
+            }
+        }
+
         val out = mutableListOf<Byte>()
         var i = 0
         while (i < len) {

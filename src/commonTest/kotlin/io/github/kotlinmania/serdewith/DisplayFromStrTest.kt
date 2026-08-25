@@ -1,3 +1,4 @@
+// port-lint: tests serde_as/lib.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.Serializable
@@ -25,6 +26,25 @@ class DisplayFromStrTest {
         @Serializable(with = ULongAsStringSerializer::class)
         val ulongVal: ULong,
     )
+
+    @Test
+    fun testDisplayFromstr() {
+        val sample =
+            Sample(
+                intVal = 123,
+                longVal = 456789012345L,
+                doubleVal = 3.1415,
+                boolVal = true,
+                shortVal = 42.toShort(),
+                byteVal = 7.toByte(),
+                uintVal = 99u,
+                ulongVal = 123456789uL,
+            )
+
+        val json = Json.encodeToString(Sample.serializer(), sample)
+        val decoded = Json.decodeFromString(Sample.serializer(), json)
+        assertEquals(sample, decoded)
+    }
 
     @Test
     fun testSerializationAndDeserialization() {

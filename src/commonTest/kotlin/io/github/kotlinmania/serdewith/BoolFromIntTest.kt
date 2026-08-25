@@ -1,3 +1,4 @@
+// port-lint: tests serde_as/lib.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.SerializationException
@@ -7,6 +8,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class BoolFromIntTest {
+    @Test
+    fun testBoolfromint() {
+        assertEquals("0", Json.encodeToString(StrictBoolFromIntSerializer, false))
+        assertEquals("1", Json.encodeToString(StrictBoolFromIntSerializer, true))
+
+        assertEquals(false, Json.decodeFromString(StrictBoolFromIntSerializer, "0"))
+        assertEquals(true, Json.decodeFromString(StrictBoolFromIntSerializer, "1"))
+
+        assertFailsWith<SerializationException> {
+            Json.decodeFromString(StrictBoolFromIntSerializer, "2")
+        }
+        assertFailsWith<SerializationException> {
+            Json.decodeFromString(StrictBoolFromIntSerializer, "-100")
+        }
+    }
+
     @Test
     fun testStrictBoolFromInt() {
         assertEquals("1", Json.encodeToString(StrictBoolFromIntSerializer, true))

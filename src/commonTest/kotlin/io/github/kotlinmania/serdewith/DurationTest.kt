@@ -1,3 +1,4 @@
+// port-lint: tests utils/duration.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.json.Json
@@ -51,4 +52,36 @@ class DurationTest {
         val decoded = json.decodeFromString(TimestampMillisSerializer, encoded)
         assertEquals(instant, decoded)
     }
+
+    @Test
+    fun testParseFloatIntoTimeParts() {
+        // Test normal behavior
+        assertEquals(
+            TimeParts(Sign.Positive, 123u, 456_000_000u),
+            parseFloatIntoTimeParts("+123.456").getOrThrow(),
+        )
+        assertEquals(
+            TimeParts(Sign.Negative, 123u, 987_000u),
+            parseFloatIntoTimeParts("-123.000987").getOrThrow(),
+        )
+        assertEquals(
+            TimeParts(Sign.Positive, 18446744073709551615uL, 123_456_789u),
+            parseFloatIntoTimeParts("18446744073709551615.123456789").getOrThrow(),
+        )
+
+        // Test behavior around 0
+        assertEquals(
+            TimeParts(Sign.Positive, 0u, 456_000_000u),
+            parseFloatIntoTimeParts("+0.456").getOrThrow(),
+        )
+        assertEquals(
+            TimeParts(Sign.Negative, 0u, 987_000u),
+            parseFloatIntoTimeParts("-0.000987").getOrThrow(),
+        )
+        assertEquals(
+            TimeParts(Sign.Positive, 0u, 123_456_789u),
+            parseFloatIntoTimeParts("0.123456789").getOrThrow(),
+        )
+    }
 }
+

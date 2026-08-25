@@ -5,9 +5,9 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 14/35 (40.0%)
-- **Function parity:** 11/901 matched (target 84) — 1.2%
-- **Class/type parity:** 15/249 matched (target 103) — 6.0%
-- **Combined symbol parity:** 26/1150 matched (target 187) — 2.3%
+- **Function parity:** 13/901 matched (target 153) — 1.4%
+- **Class/type parity:** 17/249 matched (target 133) — 6.8%
+- **Combined symbol parity:** 30/1150 matched (target 286) — 2.6%
 - **Average inline-code cosine:** 0.09 (function body across 13 matched files)
 - **Average documentation cosine:** 0.27 (doc text across 13 matched files)
 - **Cheat-zeroed Files:** 1
@@ -29,25 +29,31 @@ Every matched file is listed below with function and type symbol parity.
 
 ### 1. key_value_map
 
-- **Target:** `serdewith.KeyValueMap`
+- **Target:** `serdewith.KeyValueMap [PROVENANCE-FALLBACK]`
 - **Similarity:** 0.00
 - **Dependents:** 1
 - **Priority Score:** 1808210.0
-- **Functions:** 1/52 matched (target 2)
+- **Functions:** 1/52 matched (target 4)
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_map`, `is_human_readable`, `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_i128`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_u128`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_element`, `end`, `serialize_field`, `serialize_key`, `serialize_value`, `deserialize_seq`, `deserialize_any`, `next_element_seed`, `size_hint`, `deserialize_tuple`, `deserialize_tuple_struct`, `deserialize_map`, `deserialize_struct`, `visit_seq`, `next_key_seed`, `next_value_seed`
-- **Types:** 1/30 matched (target 2)
+- **Types:** 1/30 matched (target 3)
 - **Missing types:** `KeyValueMap`, `KeyValueMapVisitor`, `Value`, `SeqAsMapSerializer`, `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `SerializeSeqElement`, `ElementAsKeyValueSerializer`, `KeyValueSeqSerializer`, `KeyValueTupleSerializer`, `KeyValueTupleStructSerializer`, `KeyValueStructSerializer`, `SeqDeserializer`, `MapKeyDeserializer`, `KeyValueSeqDeserialize`, `KeyValueTupleDeserialize`, `KeyValueTupleStructDeserialize`, `KeyValueMapDeserialize`, `KeyValueStructDeserialize`, `VisitorWrapper`, `MapAccessWrapper`, `SeqAccessWrapper`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/key_value_map.rs` vs expected `key_value_map.rs`
+- **Proposed provenance header:** `// port-lint: tests key_value_map.rs` (current: `// port-lint: tests serde_as/key_value_map.rs`)
+- **Lint issues:** 1
 
 ### 2. enum_map
 
-- **Target:** `serdewith.EnumMap`
+- **Target:** `serdewith.EnumMap [PROVENANCE-FALLBACK]`
 - **Similarity:** 0.00
 - **Dependents:** 1
 - **Priority Score:** 1697010.0
-- **Functions:** 1/49 matched (target 2)
+- **Functions:** 1/49 matched (target 4)
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_map`, `is_human_readable`, `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_i128`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_u128`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_element`, `end`, `serialize_field`, `deserialize_seq`, `deserialize_any`, `next_element_seed`, `size_hint`, `deserialize_enum`, `variant_seed`, `unit_variant`, `newtype_variant_seed`, `tuple_variant`, `struct_variant`
-- **Types:** 0/21 matched (target 1)
+- **Types:** 0/21 matched (target 3)
 - **Missing types:** `EnumMap`, `EnumMapVisitor`, `Value`, `SeqAsMapSerializer`, `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `SerializeSeqElement`, `EnumAsMapElementSerializer`, `SerializeVariant`, `SeqDeserializer`, `EnumDeserializer`, `Variant`, `SeedTupleVariant`, `SeedStructVariant`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/enum_map.rs` vs expected `enum_map.rs`
+- **Proposed provenance header:** `// port-lint: tests enum_map.rs` (current: `// port-lint: tests serde_as/enum_map.rs`)
+- **Lint issues:** 1
 
 ### 3. with_prefix
 
@@ -55,9 +61,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.02
 - **Dependents:** 0
 - **Priority Score:** 525509.8
-- **Functions:** 2/43 matched (target 10)
+- **Functions:** 2/43 matched (target 16)
 - **Missing functions:** `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_key`, `serialize_value`, `serialize_entry`, `end`, `serialize_field`, `deserialize_any`, `deserialize_option`, `deserialize_identifier`, `expecting`, `visit_map`, `next_key_seed`, `next_value_seed`, `visit_unit`
-- **Types:** 1/12 matched (target 4)
+- **Types:** 1/12 matched (target 5)
 - **Missing types:** `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `Value`, `WithPrefixOption`
 
 ### 4. with_suffix
@@ -66,21 +72,34 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.02
 - **Dependents:** 0
 - **Priority Score:** 525509.8
-- **Functions:** 2/43 matched (target 6)
+- **Functions:** 2/43 matched (target 12)
 - **Missing functions:** `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_key`, `serialize_value`, `serialize_entry`, `end`, `serialize_field`, `deserialize_any`, `deserialize_option`, `deserialize_identifier`, `expecting`, `visit_map`, `next_key_seed`, `next_value_seed`, `visit_unit`
-- **Types:** 1/12 matched (target 2)
+- **Types:** 1/12 matched (target 3)
 - **Missing types:** `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `Value`, `WithSuffixOption`
 
 ### 5. lib
 
-- **Target:** `serdewith.Mod`
+- **Target:** `serdewith.Mod [PROVENANCE-FALLBACK]`
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 454510.0
-- **Functions:** 0/1 matched (target 15)
+- **Functions:** 0/1 matched (target 31)
 - **Missing functions:** `inspect_error`
-- **Types:** 0/44 matched (target 24)
+- **Types:** 0/44 matched (target 31)
 - **Missing types:** `As`, `Same`, `DisplayFromStr`, `IfIsHumanReadable`, `NoneAsEmptyString`, `DefaultOnError`, `DefaultOnNull`, `BytesOrString`, `DurationSeconds`, `DurationSecondsWithFrac`, `DurationMilliSeconds`, `DurationMilliSecondsWithFrac`, `DurationMicroSeconds`, `DurationMicroSecondsWithFrac`, `DurationNanoSeconds`, `DurationNanoSecondsWithFrac`, `TimestampSeconds`, `TimestampSecondsWithFrac`, `TimestampMilliSeconds`, `TimestampMilliSecondsWithFrac`, `TimestampMicroSeconds`, `TimestampMicroSecondsWithFrac`, `TimestampNanoSeconds`, `TimestampNanoSecondsWithFrac`, `Bytes`, `OneOrMany`, `PickFirst`, `FromInto`, `FromIntoRef`, `TryFromInto`, `TryFromIntoRef`, `BorrowCow`, `InspectError`, `VecSkipError`, `MapSkipError`, `BoolFromInt`, `StringWithSeparator`, `Map`, `Seq`, `MapPreventDuplicates`, `MapFirstKeyWins`, `SetPreventDuplicates`, `SetLastValueWins`, `Schema`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
+- **Lint issues:** 6
 
 ### 6. flatten_maybe
 
@@ -96,14 +115,14 @@ Every matched file is listed below with function and type symbol parity.
 ### 7. utils.duration
 
 - **Target:** `serdewith.Duration`
-- **Similarity:** 0.00
+- **Similarity:** 0.04
 - **Dependents:** 0
-- **Priority Score:** 262610.0
-- **Functions:** 0/20 matched (target 16)
-- **Missing functions:** `is_positive`, `is_negative`, `apply_f64`, `apply_i64`, `new`, `checked_mul`, `checked_div`, `with_duration`, `to_system_time`, `to_std_duration`, `from`, `serialize_as`, `expecting`, `visit_i64`, `visit_u64`, `visit_f64`, `visit_str`, `deserialize_as`, `parse_float_into_time_parts`, `test_parse_float_into_time_parts`
-- **Types:** 0/6 matched (target 8)
-- **Missing types:** `Sign`, `DurationSigned`, `DurationVisitorFlexible`, `Value`, `DurationDeserializationVisitor`, `ParseFloatError`
-- **Tests:** 0/1 matched
+- **Priority Score:** 222609.6
+- **Functions:** 2/20 matched (target 22)
+- **Missing functions:** `is_positive`, `is_negative`, `apply_f64`, `apply_i64`, `new`, `checked_mul`, `checked_div`, `with_duration`, `to_system_time`, `to_std_duration`, `from`, `serialize_as`, `expecting`, `visit_i64`, `visit_u64`, `visit_f64`, `visit_str`, `deserialize_as`
+- **Types:** 2/6 matched (target 14)
+- **Missing types:** `DurationSigned`, `DurationVisitorFlexible`, `Value`, `DurationDeserializationVisitor`
+- **Tests:** 1/1 matched
 
 ### 8. base64
 
@@ -111,9 +130,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 161610.0
-- **Functions:** 0/5 matched (target 4)
+- **Functions:** 0/5 matched (target 9)
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_str`, `charset`
-- **Types:** 0/11 matched (target 14)
+- **Types:** 0/11 matched (target 16)
 - **Missing types:** `Base64`, `Helper`, `Value`, `Sealed`, `Alphabet`, `Standard`, `UrlSafe`, `Crypt`, `Bcrypt`, `ImapMutf7`, `BinHex`
 
 ### 9. de.skip_error
@@ -133,9 +152,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 70710.0
-- **Functions:** 0/4 matched (target 2)
+- **Functions:** 0/4 matched (target 5)
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_str`
-- **Types:** 0/3 matched (target 1)
+- **Types:** 0/3 matched (target 8)
 - **Missing types:** `JsonString`, `Helper`, `Value`
 
 ### 11. rust
@@ -144,9 +163,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.07
 - **Dependents:** 0
 - **Priority Score:** 60909.3
-- **Functions:** 2/6 matched (target 5)
+- **Functions:** 2/6 matched (target 20)
 - **Missing functions:** `expecting`, `visit_seq`, `visit_map`, `deserialize_ignore_any`
-- **Types:** 1/3 matched (target 6)
+- **Types:** 1/3 matched (target 7)
 - **Missing types:** `SeqVisitor`, `MapVisitor`
 - **Lint issues:** 1
 
@@ -156,9 +175,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 30310.0
-- **Functions:** 0/2 matched (target 5)
+- **Functions:** 0/2 matched (target 11)
 - **Missing functions:** `serialize_as`, `deserialize_as`
-- **Types:** 0/1 matched (target 4)
+- **Types:** 0/1 matched (target 5)
 - **Missing types:** `Hex`
 
 ### 13. formats
@@ -178,9 +197,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 10.0
-- **Functions:** 0/0 matched (target 2)
+- **Functions:** 0/0 matched (target 4)
 - **Missing functions:** _none_
-- **Types:** 0/0 matched (target 2)
+- **Types:** 0/0 matched (target 3)
 - **Missing types:** _none_
 
 ## Success Criteria

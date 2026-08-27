@@ -5,9 +5,9 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 14/35 (40.0%)
-- **Function parity:** 13/901 matched (target 153) — 1.4%
-- **Class/type parity:** 17/249 matched (target 133) — 6.8%
-- **Combined symbol parity:** 30/1150 matched (target 286) — 2.6%
+- **Function parity:** 13/908 matched (target 153) — 1.4%
+- **Class/type parity:** 17/253 matched (target 133) — 6.7%
+- **Combined symbol parity:** 30/1161 matched (target 286) — 2.6%
 - **Average inline-code cosine:** 0.09 (function body across 13 matched files)
 - **Average documentation cosine:** 0.27 (doc text across 13 matched files)
 - **Cheat-zeroed Files:** 1
@@ -29,7 +29,7 @@ Every matched file is listed below with function and type symbol parity.
 
 ### 1. key_value_map
 
-- **Target:** `serdewith.KeyValueMap [PROVENANCE-FALLBACK]`
+- **Target:** `serdewith.KeyValueMap`
 - **Similarity:** 0.00
 - **Dependents:** 1
 - **Priority Score:** 1808210.0
@@ -37,13 +37,10 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_map`, `is_human_readable`, `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_i128`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_u128`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_element`, `end`, `serialize_field`, `serialize_key`, `serialize_value`, `deserialize_seq`, `deserialize_any`, `next_element_seed`, `size_hint`, `deserialize_tuple`, `deserialize_tuple_struct`, `deserialize_map`, `deserialize_struct`, `visit_seq`, `next_key_seed`, `next_value_seed`
 - **Types:** 1/30 matched (target 3)
 - **Missing types:** `KeyValueMap`, `KeyValueMapVisitor`, `Value`, `SeqAsMapSerializer`, `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `SerializeSeqElement`, `ElementAsKeyValueSerializer`, `KeyValueSeqSerializer`, `KeyValueTupleSerializer`, `KeyValueTupleStructSerializer`, `KeyValueStructSerializer`, `SeqDeserializer`, `MapKeyDeserializer`, `KeyValueSeqDeserialize`, `KeyValueTupleDeserialize`, `KeyValueTupleStructDeserialize`, `KeyValueMapDeserialize`, `KeyValueStructDeserialize`, `VisitorWrapper`, `MapAccessWrapper`, `SeqAccessWrapper`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/key_value_map.rs` vs expected `key_value_map.rs`
-- **Proposed provenance header:** `// port-lint: tests key_value_map.rs` (current: `// port-lint: tests serde_as/key_value_map.rs`)
-- **Lint issues:** 1
 
 ### 2. enum_map
 
-- **Target:** `serdewith.EnumMap [PROVENANCE-FALLBACK]`
+- **Target:** `serdewith.EnumMap`
 - **Similarity:** 0.00
 - **Dependents:** 1
 - **Priority Score:** 1697010.0
@@ -51,9 +48,6 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing functions:** `serialize_as`, `deserialize_as`, `expecting`, `visit_map`, `is_human_readable`, `serialize_bool`, `serialize_i8`, `serialize_i16`, `serialize_i32`, `serialize_i64`, `serialize_i128`, `serialize_u8`, `serialize_u16`, `serialize_u32`, `serialize_u64`, `serialize_u128`, `serialize_f32`, `serialize_f64`, `serialize_char`, `serialize_str`, `serialize_bytes`, `serialize_none`, `serialize_some`, `serialize_unit`, `serialize_unit_struct`, `serialize_unit_variant`, `serialize_newtype_struct`, `serialize_newtype_variant`, `serialize_seq`, `serialize_tuple`, `serialize_tuple_struct`, `serialize_tuple_variant`, `serialize_map`, `serialize_struct`, `serialize_struct_variant`, `serialize_element`, `end`, `serialize_field`, `deserialize_seq`, `deserialize_any`, `next_element_seed`, `size_hint`, `deserialize_enum`, `variant_seed`, `unit_variant`, `newtype_variant_seed`, `tuple_variant`, `struct_variant`
 - **Types:** 0/21 matched (target 3)
 - **Missing types:** `EnumMap`, `EnumMapVisitor`, `Value`, `SeqAsMapSerializer`, `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `SerializeSeqElement`, `EnumAsMapElementSerializer`, `SerializeVariant`, `SeqDeserializer`, `EnumDeserializer`, `Variant`, `SeedTupleVariant`, `SeedStructVariant`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/enum_map.rs` vs expected `enum_map.rs`
-- **Proposed provenance header:** `// port-lint: tests enum_map.rs` (current: `// port-lint: tests serde_as/enum_map.rs`)
-- **Lint issues:** 1
 
 ### 3. with_prefix
 
@@ -79,7 +73,7 @@ Every matched file is listed below with function and type symbol parity.
 
 ### 5. lib
 
-- **Target:** `serdewith.Mod [PROVENANCE-FALLBACK]`
+- **Target:** `serdewith.Mod`
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 454510.0
@@ -87,19 +81,6 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing functions:** `inspect_error`
 - **Types:** 0/44 matched (target 31)
 - **Missing types:** `As`, `Same`, `DisplayFromStr`, `IfIsHumanReadable`, `NoneAsEmptyString`, `DefaultOnError`, `DefaultOnNull`, `BytesOrString`, `DurationSeconds`, `DurationSecondsWithFrac`, `DurationMilliSeconds`, `DurationMilliSecondsWithFrac`, `DurationMicroSeconds`, `DurationMicroSecondsWithFrac`, `DurationNanoSeconds`, `DurationNanoSecondsWithFrac`, `TimestampSeconds`, `TimestampSecondsWithFrac`, `TimestampMilliSeconds`, `TimestampMilliSecondsWithFrac`, `TimestampMicroSeconds`, `TimestampMicroSecondsWithFrac`, `TimestampNanoSeconds`, `TimestampNanoSecondsWithFrac`, `Bytes`, `OneOrMany`, `PickFirst`, `FromInto`, `FromIntoRef`, `TryFromInto`, `TryFromIntoRef`, `BorrowCow`, `InspectError`, `VecSkipError`, `MapSkipError`, `BoolFromInt`, `StringWithSeparator`, `Map`, `Seq`, `MapPreventDuplicates`, `MapFirstKeyWins`, `SetPreventDuplicates`, `SetLastValueWins`, `Schema`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Provenance warning:** port-lint provenance header matched only by basename: `tests:serde_as/lib.rs` vs expected `lib.rs`
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Proposed provenance header:** `// port-lint: tests lib.rs` (current: `// port-lint: tests serde_as/lib.rs`)
-- **Lint issues:** 6
 
 ### 6. flatten_maybe
 
@@ -210,19 +191,4 @@ For each file to be considered "complete":
 - All tests ported
 - Documentation ported
 - port-lint header present
-
-## Reexport / Wiring Modules
-
-These files match `reexport_modules` patterns in `.ast_distance_config.json`. They are filtered out of
-normal priority and missing-file ladders because they are wiring
-modules, not direct logic ports. Consult them for call-site routing;
-do not treat them as the next implementation target by default.
-
-### Missing
-
-| Source | Expected target | Deps | Source path | Expected path |
-|--------|-----------------|------|-------------|---------------|
-| `content.mod` | `content.Mod` | 0 | `content/mod.rs` | `content/Mod.kt` |
-| `de.mod` | `de.Mod` | 0 | `de/mod.rs` | `de/Mod.kt` |
-| `ser.mod` | `ser.Mod` | 0 | `ser/mod.rs` | `ser/Mod.kt` |
 

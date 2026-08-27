@@ -150,7 +150,9 @@ enum class Sign {
 sealed class ParseFloatError : Exception() {
     data object InvalidValue : ParseFloatError()
 
-    data class Custom(override val message: String) : ParseFloatError()
+    data class Custom(
+        override val message: String,
+    ) : ParseFloatError()
 }
 
 /**

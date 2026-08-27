@@ -1,4 +1,4 @@
-// port-lint: source serde_with/src/duplicate_key_impls/mod.rs
+// port-lint: source duplicate_key_impls/mod.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

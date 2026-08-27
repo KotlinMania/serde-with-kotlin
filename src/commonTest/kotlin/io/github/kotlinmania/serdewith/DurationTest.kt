@@ -1,4 +1,4 @@
-// port-lint: tests utils/duration.rs
+// port-lint: tests serde_with/src/utils/duration.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.json.Json

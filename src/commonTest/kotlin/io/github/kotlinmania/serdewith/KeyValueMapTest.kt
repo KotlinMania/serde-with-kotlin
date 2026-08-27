@@ -1,4 +1,4 @@
-// port-lint: tests key_value_map.rs
+// port-lint: tests serde_with/src/key_value_map.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.builtins.serializer

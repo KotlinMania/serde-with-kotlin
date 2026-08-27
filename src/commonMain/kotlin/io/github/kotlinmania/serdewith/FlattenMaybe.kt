@@ -1,4 +1,4 @@
-// port-lint: source flatten_maybe.rs
+// port-lint: source serde_with/src/flatten_maybe.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

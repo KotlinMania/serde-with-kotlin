@@ -1,4 +1,4 @@
-// port-lint: source base64.rs
+// port-lint: source serde_with/tests/base64.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

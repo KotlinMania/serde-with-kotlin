@@ -1,4 +1,4 @@
-// port-lint: source enum_map.rs
+// port-lint: source serde_with/src/enum_map.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

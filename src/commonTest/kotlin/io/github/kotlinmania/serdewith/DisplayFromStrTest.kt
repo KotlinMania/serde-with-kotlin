@@ -1,4 +1,4 @@
-// port-lint: tests serde_as/lib.rs
+// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.Serializable

@@ -1,4 +1,4 @@
-// port-lint: tests serde_as/enum_map.rs
+// port-lint: tests enum_map.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.Serializable

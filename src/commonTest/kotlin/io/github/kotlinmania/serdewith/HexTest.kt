@@ -1,4 +1,4 @@
-// port-lint: tests hex.rs
+// port-lint: tests serde_with/tests/hex.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.json.Json

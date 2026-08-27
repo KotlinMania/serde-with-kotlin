@@ -1,4 +1,4 @@
-// port-lint: source formats.rs
+// port-lint: source serde_with/src/formats.rs
 package io.github.kotlinmania.serdewith
 
 import kotlin.test.Test

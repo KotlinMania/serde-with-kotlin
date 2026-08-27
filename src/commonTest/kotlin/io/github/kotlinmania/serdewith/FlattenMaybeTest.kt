@@ -1,3 +1,4 @@
+// port-lint: tests serde_with/src/flatten_maybe.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.Serializable

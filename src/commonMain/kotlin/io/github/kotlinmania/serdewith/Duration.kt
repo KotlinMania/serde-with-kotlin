@@ -1,4 +1,4 @@
-// port-lint: source utils/duration.rs
+// port-lint: source serde_with/src/utils/duration.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

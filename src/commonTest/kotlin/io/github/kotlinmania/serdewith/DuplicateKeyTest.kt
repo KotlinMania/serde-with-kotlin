@@ -1,3 +1,4 @@
+// port-lint: tests serde_with/src/duplicate_key_impls/mod.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.SerializationException

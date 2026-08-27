@@ -1,4 +1,4 @@
-// port-lint: source de/skip_error.rs
+// port-lint: source serde_with/src/de/skip_error.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

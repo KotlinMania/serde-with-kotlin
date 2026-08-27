@@ -1,7 +1,6 @@
 // port-lint: tests hex.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals

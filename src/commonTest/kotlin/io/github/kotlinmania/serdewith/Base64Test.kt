@@ -9,10 +9,11 @@ import kotlin.test.assertFailsWith
 class Base64Test {
     @Test
     fun base64Vec() {
-        val checkEqual = listOf(
-            byteArrayOf(0, 1, 2, 13),
-            byteArrayOf(14, 5, 6, 7),
-        )
+        val checkEqual =
+            listOf(
+                byteArrayOf(0, 1, 2, 13),
+                byteArrayOf(14, 5, 6, 7),
+            )
         val encodedPadded = checkEqual.map { Base64Codec.encode(it, StandardAlphabet, padded = true) }
         assertEquals(listOf("AAECDQ==", "DgUGBw=="), encodedPadded)
 
@@ -35,12 +36,58 @@ class Base64Test {
 
     @Test
     fun base64DifferentCharsets() {
-        val bytes = byteArrayOf(
-            0x69.toByte(), 0xb7.toByte(), 0x1d.toByte(), 0x79.toByte(), 0xf8.toByte(), 0x21.toByte(), 0x8a.toByte(), 0x39.toByte(), 0x25.toByte(), 0x9a.toByte(), 0x7a.toByte(), 0x29.toByte(), 0xaa.toByte(), 0xbb.toByte(),
-            0x2d.toByte(), 0xba.toByte(), 0xfc.toByte(), 0x31.toByte(), 0xcb.toByte(), 0x30.toByte(), 0x01.toByte(), 0x08.toByte(), 0x31.toByte(), 0x05.toByte(), 0x18.toByte(), 0x72.toByte(), 0x09.toByte(), 0x28.toByte(), 0xb3.toByte(),
-            0x0d.toByte(), 0x38.toByte(), 0xf4.toByte(), 0x11.toByte(), 0x49.toByte(), 0x35.toByte(), 0x15.toByte(), 0x59.toByte(), 0x76.toByte(), 0x19.toByte(), 0xd3.toByte(), 0x5d.toByte(), 0xb7.toByte(), 0xe3.toByte(), 0x9e.toByte(),
-            0xbb.toByte(), 0xf3.toByte(), 0xdf.toByte(), 0xbf.toByte(), 0x00.toByte(),
-        )
+        val bytes =
+            byteArrayOf(
+                0x69.toByte(),
+                0xb7.toByte(),
+                0x1d.toByte(),
+                0x79.toByte(),
+                0xf8.toByte(),
+                0x21.toByte(),
+                0x8a.toByte(),
+                0x39.toByte(),
+                0x25.toByte(),
+                0x9a.toByte(),
+                0x7a.toByte(),
+                0x29.toByte(),
+                0xaa.toByte(),
+                0xbb.toByte(),
+                0x2d.toByte(),
+                0xba.toByte(),
+                0xfc.toByte(),
+                0x31.toByte(),
+                0xcb.toByte(),
+                0x30.toByte(),
+                0x01.toByte(),
+                0x08.toByte(),
+                0x31.toByte(),
+                0x05.toByte(),
+                0x18.toByte(),
+                0x72.toByte(),
+                0x09.toByte(),
+                0x28.toByte(),
+                0xb3.toByte(),
+                0x0d.toByte(),
+                0x38.toByte(),
+                0xf4.toByte(),
+                0x11.toByte(),
+                0x49.toByte(),
+                0x35.toByte(),
+                0x15.toByte(),
+                0x59.toByte(),
+                0x76.toByte(),
+                0x19.toByte(),
+                0xd3.toByte(),
+                0x5d.toByte(),
+                0xb7.toByte(),
+                0xe3.toByte(),
+                0x9e.toByte(),
+                0xbb.toByte(),
+                0xf3.toByte(),
+                0xdf.toByte(),
+                0xbf.toByte(),
+                0x00.toByte(),
+            )
 
         val standard = Base64Codec.encode(bytes, StandardAlphabet, padded = true)
         assertEquals("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/AA==", standard)

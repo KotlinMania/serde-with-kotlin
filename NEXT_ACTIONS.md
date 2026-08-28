@@ -5,12 +5,12 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 14/35 (40.0%)
-- **Function parity:** 13/908 matched (target 159) — 1.4%
-- **Class/type parity:** 17/253 matched (target 138) — 6.7%
-- **Combined symbol parity:** 30/1161 matched (target 297) — 2.6%
+- **Function parity:** 13/907 matched (target 121) — 1.4%
+- **Class/type parity:** 17/209 matched (target 103) — 8.1%
+- **Combined symbol parity:** 30/1116 matched (target 224) — 2.7%
 - **Average inline-code cosine:** 0.09 (function body across 13 matched files)
 - **Average documentation cosine:** 0.27 (doc text across 13 matched files)
-- **Cheat-zeroed Files:** 1
+- **Cheat-zeroed Files:** 0
 - **Critical Issues:** 13 files with <0.60 function similarity
 
 ## Priority 1: Fix Incomplete High-Dependency Files
@@ -71,18 +71,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 1/12 matched (target 3)
 - **Missing types:** `Ok`, `Error`, `SerializeSeq`, `SerializeTuple`, `SerializeTupleStruct`, `SerializeTupleVariant`, `SerializeMap`, `SerializeStruct`, `SerializeStructVariant`, `Value`, `WithSuffixOption`
 
-### 5. lib
-
-- **Target:** `serdewith.Mod`
-- **Similarity:** 0.00
-- **Dependents:** 0
-- **Priority Score:** 454510.0
-- **Functions:** 0/1 matched (target 31)
-- **Missing functions:** `inspect_error`
-- **Types:** 0/44 matched (target 31)
-- **Missing types:** `As`, `Same`, `DisplayFromStr`, `IfIsHumanReadable`, `NoneAsEmptyString`, `DefaultOnError`, `DefaultOnNull`, `BytesOrString`, `DurationSeconds`, `DurationSecondsWithFrac`, `DurationMilliSeconds`, `DurationMilliSecondsWithFrac`, `DurationMicroSeconds`, `DurationMicroSecondsWithFrac`, `DurationNanoSeconds`, `DurationNanoSecondsWithFrac`, `TimestampSeconds`, `TimestampSecondsWithFrac`, `TimestampMilliSeconds`, `TimestampMilliSecondsWithFrac`, `TimestampMicroSeconds`, `TimestampMicroSecondsWithFrac`, `TimestampNanoSeconds`, `TimestampNanoSecondsWithFrac`, `Bytes`, `OneOrMany`, `PickFirst`, `FromInto`, `FromIntoRef`, `TryFromInto`, `TryFromIntoRef`, `BorrowCow`, `InspectError`, `VecSkipError`, `MapSkipError`, `BoolFromInt`, `StringWithSeparator`, `Map`, `Seq`, `MapPreventDuplicates`, `MapFirstKeyWins`, `SetPreventDuplicates`, `SetLastValueWins`, `Schema`
-
-### 6. flatten_maybe
+### 5. flatten_maybe
 
 - **Target:** `serdewith.FlattenMaybe`
 - **Similarity:** 0.01
@@ -93,7 +82,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 0/5 matched (target 3)
 - **Missing types:** `FlattenedMaybe`, `Value`, `Field`, `FieldVisitor`, `FlattenedMaybeVisitor`
 
-### 7. utils.duration
+### 6. utils.duration
 
 - **Target:** `serdewith.Duration`
 - **Similarity:** 0.04
@@ -105,7 +94,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing types:** `DurationSigned`, `DurationVisitorFlexible`, `Value`, `DurationDeserializationVisitor`
 - **Tests:** 1/1 matched
 
-### 8. base64
+### 7. base64
 
 - **Target:** `serdewith.Base64`
 - **Similarity:** 0.00
@@ -116,7 +105,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 0/11 matched (target 16)
 - **Missing types:** `Base64`, `Helper`, `Value`, `Sealed`, `Alphabet`, `Standard`, `UrlSafe`, `Crypt`, `Bcrypt`, `ImapMutf7`, `BinHex`
 
-### 9. de.skip_error
+### 8. de.skip_error
 
 - **Target:** `serdewith.SkipError`
 - **Similarity:** 0.05
@@ -127,7 +116,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 0/5 matched (target 2)
 - **Missing types:** `GoodOrError`, `SeqVisitor`, `Value`, `MapSkipErrorVisitor`, `KVPair`
 
-### 10. json
+### 9. json
 
 - **Target:** `serdewith.Json`
 - **Similarity:** 0.00
@@ -138,7 +127,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 0/3 matched (target 8)
 - **Missing types:** `JsonString`, `Helper`, `Value`
 
-### 11. rust
+### 10. rust
 
 - **Target:** `serdewith.Rust`
 - **Similarity:** 0.07
@@ -150,7 +139,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing types:** `SeqVisitor`, `MapVisitor`
 - **Lint issues:** 1
 
-### 12. hex
+### 11. hex
 
 - **Target:** `serdewith.Hex`
 - **Similarity:** 0.00
@@ -161,7 +150,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 0/1 matched (target 5)
 - **Missing types:** `Hex`
 
-### 13. formats
+### 12. formats
 
 - **Target:** `serdewith.Formats`
 - **Similarity:** 0.95
@@ -172,17 +161,6 @@ Every matched file is listed below with function and type symbol parity.
 - **Types:** 11/11 matched (target 32)
 - **Missing types:** _none_
 
-### 14. duplicate_key_impls.mod
-
-- **Target:** `serdewith.DuplicateKey [STUB]`
-- **Similarity:** 0.00
-- **Dependents:** 0
-- **Priority Score:** 10.0
-- **Functions:** 0/0 matched (target 7)
-- **Missing functions:** _none_
-- **Types:** 0/0 matched (target 4)
-- **Missing types:** _none_
-
 ## Success Criteria
 
 For each file to be considered "complete":
@@ -191,4 +169,18 @@ For each file to be considered "complete":
 - All tests ported
 - Documentation ported
 - port-lint header present
+
+## Reexport / Wiring Modules
+
+These files match `reexport_modules` patterns in `.ast_distance_config.json`. They are filtered out of
+normal priority and missing-file ladders because they are wiring
+modules, not direct logic ports. Consult them for call-site routing;
+do not treat them as the next implementation target by default.
+
+### Matched
+
+| Source | Target | Path |
+|--------|--------|------|
+| `lib` | `serdewith.Mod` | `lib` |
+| `duplicate_key_impls.mod` | `serdewith.DuplicateKey` | `duplicate_key_impls/mod` |
 

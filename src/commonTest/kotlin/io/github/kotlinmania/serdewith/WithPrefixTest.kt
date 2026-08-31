@@ -1,6 +1,7 @@
-// port-lint: tests with_prefix.rs
+// port-lint: tests serde_with/src/with_prefix.rs
 package io.github.kotlinmania.serdewith
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
@@ -9,6 +10,23 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class WithPrefixTest {
+    @Serializable
+    data class Player(
+        val name: String,
+        val score: Int,
+    )
+
+    @Test
+    fun testWithPrefix() {
+        val serializer = WithPrefixSerializer("player1_", Player.serializer())
+        val player = Player(name = "Alice", score = 100)
+
+        val json = Json.encodeToString(serializer, player)
+        assertEquals("{\"player1_name\":\"Alice\",\"player1_score\":100}", json)
+
+        val decoded = Json.decodeFromString(serializer, json)
+        assertEquals(player, decoded)
+    }
     @Test
     fun testFlattenWithPrefix() {
         val player1 = mapOf("name" to "name1", "votes" to "1")

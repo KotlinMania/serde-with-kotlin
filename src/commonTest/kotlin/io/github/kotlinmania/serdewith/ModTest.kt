@@ -1,4 +1,4 @@
-// port-lint: tests lib.rs
+// port-lint: tests serde_with/src/lib.rs
 package io.github.kotlinmania.serdewith
 
 import kotlin.test.Test

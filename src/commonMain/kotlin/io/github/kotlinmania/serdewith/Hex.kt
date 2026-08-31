@@ -1,4 +1,4 @@
-// port-lint: source hex.rs
+// port-lint: source serde_with/src/hex.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

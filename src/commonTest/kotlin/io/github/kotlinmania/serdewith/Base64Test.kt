@@ -1,4 +1,4 @@
-// port-lint: tests base64.rs
+// port-lint: tests serde_with/src/base64.rs
 package io.github.kotlinmania.serdewith
 
 import kotlin.test.Test

@@ -1,6 +1,7 @@
-// port-lint: tests with_suffix.rs
+// port-lint: tests serde_with/src/with_suffix.rs
 package io.github.kotlinmania.serdewith
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
@@ -9,6 +10,23 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class WithSuffixTest {
+    @Serializable
+    data class Player(
+        val name: String,
+        val score: Int,
+    )
+
+    @Test
+    fun testWithSuffix() {
+        val serializer = WithSuffixSerializer("_v1", Player.serializer())
+        val player = Player(name = "Alice", score = 100)
+
+        val json = Json.encodeToString(serializer, player)
+        assertEquals("{\"name_v1\":\"Alice\",\"score_v1\":100}", json)
+
+        val decoded = Json.decodeFromString(serializer, json)
+        assertEquals(player, decoded)
+    }
     @Test
     fun testFlattenWithSuffix() {
         val player1 = mapOf("name" to "name1", "votes" to "1")

@@ -88,6 +88,7 @@ class DeserializeIgnoreAnySerializer<T>(
 
     override fun serialize(encoder: Encoder, value: T) {
         // No-op or encode empty string
+        value.hashCode()
         encoder.encodeString("")
     }
 

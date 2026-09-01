@@ -1,4 +1,4 @@
-// port-lint: tests serde_with/src/with_prefix.rs
+// port-lint: tests with_prefix.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.Serializable

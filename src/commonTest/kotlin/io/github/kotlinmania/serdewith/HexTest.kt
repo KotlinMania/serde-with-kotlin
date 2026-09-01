@@ -1,4 +1,4 @@
-// port-lint: tests serde_with/src/hex.rs
+// port-lint: tests hex.rs
 package io.github.kotlinmania.serdewith
 
 import kotlin.test.Test

@@ -1,4 +1,4 @@
-// port-lint: source serde_with/src/rust.rs
+// port-lint: source rust.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

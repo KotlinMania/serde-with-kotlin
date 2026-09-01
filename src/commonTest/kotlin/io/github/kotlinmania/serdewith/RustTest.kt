@@ -1,4 +1,4 @@
-// port-lint: tests serde_with/src/rust.rs
+// port-lint: tests rust.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.SerializationException

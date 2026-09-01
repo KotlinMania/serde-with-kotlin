@@ -1,4 +1,4 @@
-// port-lint: tests serde_with/tests/serde_as/default_on.rs
+// port-lint: tests ../tests/serde_as/default_on.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.builtins.serializer

@@ -27,6 +27,7 @@ class WithSuffixTest {
         val decoded = Json.decodeFromString(serializer, json)
         assertEquals(player, decoded)
     }
+
     @Test
     fun testFlattenWithSuffix() {
         val player1 = mapOf("name" to "name1", "votes" to "1")

@@ -17,7 +17,11 @@
   },
   "reexport_modules": [
     "lib",
+    "lib.rs",
+    "serde_with/src/lib.rs",
     "duplicate_key_impls/mod",
-    "duplicate_key_impls.mod"
+    "duplicate_key_impls.mod",
+    "duplicate_key_impls/mod.rs",
+    "serde_with/src/duplicate_key_impls/mod.rs"
   ]
 }

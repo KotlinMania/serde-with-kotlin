@@ -1,4 +1,4 @@
-// port-lint: source serde_with/src/with_suffix.rs
+// port-lint: source with_suffix.rs
 package io.github.kotlinmania.serdewith
 
 import kotlinx.serialization.KSerializer

@@ -9,7 +9,14 @@ detekt = "2.0.0-alpha.6"
 ktlint = "14.2.0"
 ktlintEngine = "1.8.0"
 kotlinxBenchmark = "0.5.0"
-base64 = "0.1.0"
+base64-kotlin = "0.1.0"
+indexmap-kotlin = "0.1.4"
+serde-kotlin = "0.1.10"
+serde-test-kotlin = "0.1.1"
+schemars-kotlin = "0.1.2"
+pretty-assertions-kotlin = "0.1.0"
+glob-kotlin = "0.1.2"
+regex-kotlin = "0.1.0"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -28,7 +35,14 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collectionsImmutable" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinxBenchmark" }
-base64-kotlin = { module = "io.github.kotlinmania:base64-kotlin", version.ref = "base64" }
+base64-kotlin = { module = "io.github.kotlinmania:base64-kotlin", version.ref = "base64-kotlin" }
+indexmap-kotlin = { module = "io.github.kotlinmania:indexmap-kotlin", version.ref = "indexmap-kotlin" }
+serde-kotlin = { module = "io.github.kotlinmania:serde-kotlin", version.ref = "serde-kotlin" }
+serde-test-kotlin = { module = "io.github.kotlinmania:serde-test-kotlin", version.ref = "serde-test-kotlin" }
+schemars-kotlin = { module = "io.github.kotlinmania:schemars-kotlin", version.ref = "schemars-kotlin" }
+pretty-assertions-kotlin = { module = "io.github.kotlinmania:pretty-assertions-kotlin", version.ref = "pretty-assertions-kotlin" }
+glob-kotlin = { module = "io.github.kotlinmania:glob-kotlin", version.ref = "glob-kotlin" }
+regex-kotlin = { module = "io.github.kotlinmania:regex-kotlin", version.ref = "regex-kotlin" }
 
 [bundles]
 serde-with-commonMain = [
@@ -38,4 +52,9 @@ serde-with-commonMain = [
   "kotlinx-datetime",
   "collections-immutable",
   "base64-kotlin",
+  "indexmap-kotlin",
 ]
+serde-with-commonTest = [
+  "pretty-assertions-kotlin",
+]
+

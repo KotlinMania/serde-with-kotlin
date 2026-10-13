@@ -16,7 +16,7 @@ object NoneAsEmptyStringSerializer : KSerializer<String?> {
         PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.NoneAsEmptyString", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: String?) {
-        encoder.encodeString(value ?: "")
+        encoder.encodeString(value.orEmpty())
     }
 
     override fun deserialize(decoder: Decoder): String? {

@@ -25,14 +25,21 @@ class BoolFromIntSerializer(
     override fun deserialize(decoder: Decoder): Boolean {
         val intVal = decoder.decodeInt()
         return when (strictness) {
-            is Strict ->
+            is Strict -> {
                 when (intVal) {
                     0 -> false
                     1 -> true
                     else -> throw SerializationException("Invalid boolean integer value: $intVal (expected 0 or 1 in strict mode)")
                 }
-            is Flexible -> intVal != 0
-            else -> intVal != 0
+            }
+
+            is Flexible -> {
+                intVal != 0
+            }
+
+            else -> {
+                intVal != 0
+            }
         }
     }
 }

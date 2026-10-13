@@ -7,54 +7,76 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.base64.alphabet.Alphabet as Base64Charset
 
 /**
- * Base64 alphabet definition.
+ * A base64 alphabet definition backed by base64-kotlin's [Base64Charset].
  */
-interface Base64Alphabet {
-    val chars: String
+sealed interface Base64Alphabet {
+    val charset: Base64Charset
+
+    /** Standard Base64 alphabet. */
+    object Standard : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.STANDARD
+    }
+
+    /** URL-safe Base64 alphabet. */
+    object UrlSafe : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.URL_SAFE
+    }
+
+    /** Bcrypt Base64 alphabet. */
+    object Bcrypt : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.BCRYPT
+    }
+
+    /** BinHex Base64 alphabet. */
+    object BinHex : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.BIN_HEX
+    }
+
+    /** Crypt Base64 alphabet. */
+    object Crypt : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.CRYPT
+    }
+
+    /** IMAP modified UTF-7 Base64 alphabet. */
+    object ImapMutf7 : Base64Alphabet {
+        override val charset: Base64Charset = Base64Charset.IMAP_MUTF7
+    }
 }
+
+/** An alias for [Base64Alphabet] matching upstream Rust `Alphabet` trait. */
+typealias Alphabet = Base64Alphabet
 
 /** Standard Base64 alphabet. */
-object StandardAlphabet : Base64Alphabet {
-    override val chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-}
+typealias StandardAlphabet = Base64Alphabet.Standard
 
 /** URL-safe Base64 alphabet. */
-object UrlSafeAlphabet : Base64Alphabet {
-    override val chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-}
+typealias UrlSafeAlphabet = Base64Alphabet.UrlSafe
 
 /** Bcrypt Base64 alphabet. */
-object BcryptAlphabet : Base64Alphabet {
-    override val chars: String = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-}
+typealias BcryptAlphabet = Base64Alphabet.Bcrypt
 
 /** BinHex Base64 alphabet. */
-object BinHexAlphabet : Base64Alphabet {
-    override val chars: String = "!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr"
-}
+typealias BinHexAlphabet = Base64Alphabet.BinHex
 
 /** Crypt Base64 alphabet. */
-object CryptAlphabet : Base64Alphabet {
-    override val chars: String = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-}
+typealias CryptAlphabet = Base64Alphabet.Crypt
 
 /** IMAP modified UTF-7 Base64 alphabet. */
-object ImapMutf7Alphabet : Base64Alphabet {
-    override val chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+,"
-}
+typealias ImapMutf7Alphabet = Base64Alphabet.ImapMutf7
 
 /**
- * Base64 encoding and decoding utilities.
+ * Base64 encoding and decoding utilities backed by base64-kotlin alphabets.
  */
 object Base64Codec {
     fun encode(
         data: ByteArray,
-        alphabet: Base64Alphabet = StandardAlphabet,
+        alphabet: Base64Alphabet = Base64Alphabet.Standard,
         padded: Boolean = true,
     ): String {
-        val table = alphabet.chars
+        val table = alphabet.charset.asString()
         val sb = StringBuilder((data.size * 4 + 2) / 3)
         var i = 0
         while (i + 2 < data.size) {
@@ -88,9 +110,9 @@ object Base64Codec {
 
     fun decode(
         text: String,
-        alphabet: Base64Alphabet = StandardAlphabet,
+        alphabet: Base64Alphabet = Base64Alphabet.Standard,
     ): ByteArray {
-        val table = alphabet.chars
+        val table = alphabet.charset.asString()
         val decodeTable = IntArray(256) { -1 }
         for (idx in table.indices) {
             decodeTable[table[idx].code] = idx
@@ -153,7 +175,7 @@ object Base64Codec {
  * Base64 serializer for [ByteArray].
  */
 open class Base64Serializer(
-    private val alphabet: Base64Alphabet = StandardAlphabet,
+    private val alphabet: Base64Alphabet = Base64Alphabet.Standard,
     private val padded: Boolean = true,
 ) : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor =
@@ -163,23 +185,30 @@ open class Base64Serializer(
         encoder.encodeString(Base64Codec.encode(value, alphabet, padded))
     }
 
-    override fun deserialize(decoder: Decoder): ByteArray = Base64Codec.decode(decoder.decodeString(), alphabet)
+    override fun deserialize(decoder: Decoder): ByteArray =
+        Base64Codec.decode(decoder.decodeString(), alphabet)
 }
 
 /** Standard Base64 serializer with padding. */
-object Base64StandardPaddedSerializer : Base64Serializer(StandardAlphabet, true)
+object Base64StandardPaddedSerializer : Base64Serializer(Base64Alphabet.Standard, true)
 
 /** Standard Base64 serializer without padding. */
-object Base64StandardUnpaddedSerializer : Base64Serializer(StandardAlphabet, false)
+object Base64StandardUnpaddedSerializer : Base64Serializer(Base64Alphabet.Standard, false)
 
 /** URL-safe Base64 serializer with padding. */
-object Base64UrlSafePaddedSerializer : Base64Serializer(UrlSafeAlphabet, true)
+object Base64UrlSafePaddedSerializer : Base64Serializer(Base64Alphabet.UrlSafe, true)
 
 /** URL-safe Base64 serializer without padding. */
-object Base64UrlSafeUnpaddedSerializer : Base64Serializer(UrlSafeAlphabet, false)
+object Base64UrlSafeUnpaddedSerializer : Base64Serializer(Base64Alphabet.UrlSafe, false)
 
 /** Bcrypt Base64 serializer. */
-object Base64BcryptSerializer : Base64Serializer(BcryptAlphabet, false)
+object Base64BcryptSerializer : Base64Serializer(Base64Alphabet.Bcrypt, false)
 
 /** BinHex Base64 serializer. */
-object Base64BinHexSerializer : Base64Serializer(BinHexAlphabet, true)
+object Base64BinHexSerializer : Base64Serializer(Base64Alphabet.BinHex, true)
+
+/** Crypt Base64 serializer. */
+object Base64CryptSerializer : Base64Serializer(Base64Alphabet.Crypt, false)
+
+/** IMAP modified UTF-7 Base64 serializer. */
+object Base64ImapMutf7Serializer : Base64Serializer(Base64Alphabet.ImapMutf7, false)

@@ -48,9 +48,11 @@ class DoubleOptionSerializer<T>(
             is DoubleOption.Missing -> {
                 // Typically omitted or encoded as null depending on format
             }
+
             is DoubleOption.Null -> {
                 encoder.encodeNull()
             }
+
             is DoubleOption.Value -> {
                 elementSerializer.serialize(encoder, value.value)
             }

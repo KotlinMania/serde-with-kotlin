@@ -41,9 +41,11 @@ class SetWithDuplicateStrategySerializer<T>(
                         throw SerializationException("Duplicate element found in set: $item")
                     }
                 }
+
                 DuplicateStrategy.FirstValueWins -> {
                     result.add(item)
                 }
+
                 DuplicateStrategy.LastValueWins -> {
                     result.remove(item)
                     result.add(item)
@@ -85,11 +87,13 @@ class MapWithDuplicateStrategySerializer<K, V>(
                     }
                     result[key] = value
                 }
+
                 DuplicateStrategy.FirstValueWins -> {
                     if (!result.containsKey(key)) {
                         result[key] = value
                     }
                 }
+
                 DuplicateStrategy.LastValueWins -> {
                     result[key] = value
                 }

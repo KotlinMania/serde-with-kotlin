@@ -175,11 +175,15 @@ fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
                 value = value.substring(1)
                 Sign.Positive
             }
+
             value.startsWith('-') -> {
                 value = value.substring(1)
                 Sign.Negative
             }
-            else -> Sign.Positive
+
+            else -> {
+                Sign.Positive
+            }
         }
 
     val parts = value.split('.')
@@ -188,6 +192,7 @@ fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
             val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
             Result.success(TimeParts(sign, seconds, 0u))
         }
+
         2 -> {
             val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
             val subsecondsStr = parts[1]
@@ -200,12 +205,15 @@ fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
             }
             var subseconds = subsecondsStr.toUIntOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
             var multiplier = 1u
-            for (i in 0 until (9 - subsecondsStr.length)) {
+            repeat(9 - subsecondsStr.length) {
                 multiplier *= 10u
             }
             subseconds *= multiplier
             Result.success(TimeParts(sign, seconds, subseconds))
         }
-        else -> Result.failure(ParseFloatError.InvalidValue)
+
+        else -> {
+            Result.failure(ParseFloatError.InvalidValue)
+        }
     }
 }

@@ -1,26 +1,30 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * Serializes `null` as empty string and deserializes empty string as `null`.
  */
-object NoneAsEmptyStringSerializer : KSerializer<String?> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.NoneAsEmptyString", PrimitiveKind.STRING)
+object NoneAsEmptyString : SerializeAs<String?>, DeserializeAs<String?> {
+    override fun <Ok> serializeAs(source: String?, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeStr(source.orEmpty())
 
-    override fun serialize(encoder: Encoder, value: String?) {
-        encoder.encodeString(value.orEmpty())
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<String?> =
+        deserializer.deserializeStr(NoneAsEmptyStringVisitor)
+}
 
-    override fun deserialize(decoder: Decoder): String? {
-        val s = decoder.decodeString()
-        return if (s.isEmpty()) null else s
-    }
+private object NoneAsEmptyStringVisitor : Visitor<String?> {
+    override fun expecting(): String = "a string"
+
+    override fun visitStr(v: String): SerdeResult<String?> =
+        SerdeResult.success(if (v.isEmpty()) null else v)
+
+    override fun visitNone(): SerdeResult<String?> =
+        SerdeResult.success(null)
+
+    override fun <D> visitSome(deserializer: D): SerdeResult<String?> where D : Deserializer =
+        deserializer.deserializeStr(this)
 }

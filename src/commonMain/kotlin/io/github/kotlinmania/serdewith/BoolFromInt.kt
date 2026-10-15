@@ -1,51 +1,93 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Unexpected
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * Serializes and deserializes a [Boolean] as an integer (0 or 1).
  */
-class BoolFromIntSerializer(
+class BoolFromInt(
     private val strictness: Strictness = Strict,
-) : KSerializer<Boolean> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.BoolFromInt", PrimitiveKind.INT)
+) : SerializeAs<Boolean>,
+    DeserializeAs<Boolean> {
+    override fun <Ok> serializeAs(source: Boolean, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(if (source) 1L else 0L)
 
-    override fun serialize(encoder: Encoder, value: Boolean) {
-        encoder.encodeInt(if (value) 1 else 0)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Boolean> =
+        deserializer.deserializeI64(
+            object : Visitor<Boolean> {
+                override fun expecting(): String =
+                    if (strictness is Strict) "an integer 0 or 1" else "an integer"
 
-    override fun deserialize(decoder: Decoder): Boolean {
-        val intVal = decoder.decodeInt()
-        return when (strictness) {
-            is Strict -> {
-                when (intVal) {
-                    0 -> false
-                    1 -> true
-                    else -> throw SerializationException("Invalid boolean integer value: $intVal (expected 0 or 1 in strict mode)")
-                }
-            }
+                override fun visitI64(v: Long): SerdeResult<Boolean> =
+                    when (strictness) {
+                        is Strict -> {
+                            when (v) {
+                                0L -> {
+                                    SerdeResult.success(false)
+                                }
 
-            is Flexible -> {
-                intVal != 0
-            }
+                                1L -> {
+                                    SerdeResult.success(true)
+                                }
 
-            else -> {
-                intVal != 0
-            }
-        }
-    }
+                                else -> {
+                                    SerdeResult.failure(
+                                        SerdeError.invalidValue(
+                                            Unexpected.Signed(v),
+                                            this,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+
+                        else -> {
+                            SerdeResult.success(v != 0L)
+                        }
+                    }
+
+                override fun visitU64(v: ULong): SerdeResult<Boolean> =
+                    when (strictness) {
+                        is Strict -> {
+                            when (v) {
+                                0uL -> {
+                                    SerdeResult.success(false)
+                                }
+
+                                1uL -> {
+                                    SerdeResult.success(true)
+                                }
+
+                                else -> {
+                                    SerdeResult.failure(
+                                        SerdeError.invalidValue(
+                                            Unexpected.Unsigned(v),
+                                            this,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+
+                        else -> {
+                            SerdeResult.success(v != 0uL)
+                        }
+                    }
+            },
+        )
 }
 
-/** Strict boolean from int serializer (0 = false, 1 = true). */
-object StrictBoolFromIntSerializer : KSerializer<Boolean> by BoolFromIntSerializer(Strict)
+/** Strict boolean from int (0 = false, 1 = true). */
+object StrictBoolFromInt :
+    SerializeAs<Boolean> by BoolFromInt(Strict),
+    DeserializeAs<Boolean> by BoolFromInt(Strict)
 
-/** Flexible boolean from int serializer (0 = false, non-zero = true). */
-object FlexibleBoolFromIntSerializer : KSerializer<Boolean> by BoolFromIntSerializer(Flexible)
+/** Flexible boolean from int (0 = false, non-zero = true). */
+object FlexibleBoolFromInt :
+    SerializeAs<Boolean> by BoolFromInt(Flexible),
+    DeserializeAs<Boolean> by BoolFromInt(Flexible)

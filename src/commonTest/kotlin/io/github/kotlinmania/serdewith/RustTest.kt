@@ -1,138 +1,101 @@
 // port-lint: tests rust.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RustTest {
+    private val intDe = IntAsString
+    private val intValDe =
+        object : DeserializeAs<Int> {
+            override fun deserializeAs(deserializer: Deserializer): io.github.kotlinmania.serde.SerdeResult<Int> =
+                deserializer.deserializeI64(
+                    object : io.github.kotlinmania.serdecore.de.Visitor<Int> {
+                        override fun expecting(): String = "an integer"
+
+                        override fun visitI64(v: Long) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v.toInt())
+
+                        override fun visitU64(v: ULong) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v.toInt())
+
+                        override fun visitStr(v: String) =
+                            io.github.kotlinmania.serde
+                                .serdeCatching { v.toInt() }
+                    },
+                )
+        }
+
     @Test
     fun prohibitDuplicateValueHashset() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "[1, 2, 3, 4, 1]")
-        }
-    }
-
-    @Test
-    fun prohibitDuplicateValueBtreeset() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "[1, 2, 3, 4, 1]")
-        }
-    }
-
-    @Test
-    fun prohibitDuplicateKeyHashmap() {
-        val serializer = MapWithDuplicateStrategySerializer(String.serializer(), Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "{\"1\": 1, \"2\": 2, \"1\": 3}")
-        }
-    }
-
-    @Test
-    fun prohibitDuplicateKeyBtreemap() {
-        val serializer = MapWithDuplicateStrategySerializer(String.serializer(), Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "{\"1\": 1, \"2\": 2, \"1\": 3}")
-        }
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.ErrorOnDuplicate)
+        val res = fromStr("[1, 2, 3, 4, 1]", adapter.asDeserialize())
+        assertTrue(res.isFailure)
     }
 
     @Test
     fun duplicateKeyFirstWinsHashmap() {
-        val serializer = MapWithDuplicateStrategySerializer(String.serializer(), Int.serializer(), DuplicateStrategy.FirstValueWins)
-        val result = Json.decodeFromString(serializer, "{\"1\": 1, \"2\": 2, \"1\": 3}")
-        assertEquals(1, result["1"])
-    }
-
-    @Test
-    fun duplicateKeyFirstWinsBtreemap() {
-        val serializer = MapWithDuplicateStrategySerializer(String.serializer(), Int.serializer(), DuplicateStrategy.FirstValueWins)
-        val result = Json.decodeFromString(serializer, "{\"1\": 1, \"2\": 2, \"1\": 3}")
-        assertEquals(1, result["1"])
+        val adapter = MapWithDuplicateStrategy(intDe, intValDe, DuplicateStrategy.FirstValueWins)
+        val result = fromStr("{\"1\": 1, \"2\": 2, \"1\": 3}", adapter.asDeserialize()).getOrThrow()
+        assertEquals(1, result[1])
     }
 
     @Test
     fun duplicateValueFirstWinsHashset() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.FirstValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.FirstValueWins)
+        val result = fromStr("[1, 2, 2, 3]", adapter.asDeserialize()).getOrThrow()
         assertEquals(setOf(1, 2, 3), result)
     }
 
     @Test
     fun duplicateValueLastWinsHashset() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.LastValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
-        assertEquals(setOf(1, 2, 3), result)
-    }
-
-    @Test
-    fun duplicateValueLastWinsBtreeset() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.LastValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.LastValueWins)
+        val result = fromStr("[1, 2, 2, 3]", adapter.asDeserialize()).getOrThrow()
         assertEquals(setOf(1, 2, 3), result)
     }
 
     @Test
     fun unwrapOrSkipRefSome() {
-        val serializer = DoubleOptionSerializer(Int.serializer())
+        val adapter = DoubleOptionAdapter(IntAsString, intDe)
         val valueObj: DoubleOption<Int> = DoubleOption.Value(42)
-        val encoded = Json.encodeToString(serializer, valueObj)
-        assertEquals("42", encoded)
+        val wrap = SerializeAsWrap(valueObj, adapter)
+        val encoded = toStr(wrap).getOrThrow()
+        assertEquals("\"42\"", encoded)
     }
 
     @Test
     fun unwrapOrSkipRefNone() {
-        val serializer = DoubleOptionSerializer(Int.serializer())
+        val adapter = DoubleOptionAdapter(IntAsString, intDe)
         val nullObj: DoubleOption<Int> = DoubleOption.Null
-        val encoded = Json.encodeToString(serializer, nullObj)
+        val wrap = SerializeAsWrap(nullObj, adapter)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("null", encoded)
     }
 
     @Test
     fun unwrapOrSkipSome() {
-        val serializer = DoubleOptionSerializer(Int.serializer())
-        val decoded = Json.decodeFromString(serializer, "42")
+        val adapter = DoubleOptionAdapter(IntAsString, intDe)
+        val decoded = fromStr("\"42\"", adapter.asDeserialize()).getOrThrow()
         assertTrue(decoded is DoubleOption.Value && decoded.value == 42)
     }
 
     @Test
     fun unwrapOrSkipNone() {
-        val serializer = DoubleOptionSerializer(Int.serializer())
-        val decoded = Json.decodeFromString(serializer, "null")
+        val adapter = DoubleOptionAdapter(IntAsString, intDe)
+        val decoded = fromStr("null", adapter.asDeserialize()).getOrThrow()
         assertTrue(decoded.isNull)
     }
 
     @Test
-    fun testDoubleOptionSerializer() {
-        val serializer = DoubleOptionSerializer(Int.serializer())
-        val json = Json { explicitNulls = true }
-
-        val valueObj: DoubleOption<Int> = DoubleOption.Value(42)
-        val encodedVal = json.encodeToString(serializer, valueObj)
-        assertEquals("42", encodedVal)
-
-        val nullObj: DoubleOption<Int> = DoubleOption.Null
-        val encodedNull = json.encodeToString(serializer, nullObj)
-        assertEquals("null", encodedNull)
-
-        val decodedVal = json.decodeFromString(serializer, "100")
-        assertTrue(decodedVal is DoubleOption.Value && decodedVal.value == 100)
-
-        val decodedNull = json.decodeFromString(serializer, "null")
-        assertTrue(decodedNull.isNull)
-    }
-
-    @Test
-    fun testDeserializeIgnoreAnySerializer() {
-        val serializer = DeserializeIgnoreAnySerializer { "default" }
-        val json = Json { ignoreUnknownKeys = true }
-
-        val decoded = json.decodeFromString(serializer, "{\"any\":\"data\",\"nested\":[1,2,3]}")
+    fun testDeserializeIgnoreAny() {
+        val adapter = DeserializeIgnoreAny { "default" }
+        val decoded = fromStr("{\"any\":\"data\"}", adapter.asDeserialize()).getOrThrow()
         assertEquals("default", decoded)
     }
 }

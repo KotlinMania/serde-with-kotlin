@@ -1,45 +1,39 @@
-// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class BoolFromIntTest {
     @Test
-    fun testBoolfromint() {
-        assertEquals("0", Json.encodeToString(StrictBoolFromIntSerializer, false))
-        assertEquals("1", Json.encodeToString(StrictBoolFromIntSerializer, true))
+    fun testBoolFromInt() {
+        val falseWrap = SerializeAsWrap(false, StrictBoolFromInt)
+        val trueWrap = SerializeAsWrap(true, StrictBoolFromInt)
 
-        assertEquals(false, Json.decodeFromString(StrictBoolFromIntSerializer, "0"))
-        assertEquals(true, Json.decodeFromString(StrictBoolFromIntSerializer, "1"))
+        assertEquals("0", toStr(falseWrap).getOrThrow())
+        assertEquals("1", toStr(trueWrap).getOrThrow())
 
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(StrictBoolFromIntSerializer, "2")
-        }
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(StrictBoolFromIntSerializer, "-100")
-        }
-    }
+        val falseRes = fromStr("0", StrictBoolFromInt.asDeserialize())
+        assertEquals(false, falseRes.getOrThrow())
 
-    @Test
-    fun testStrictBoolFromInt() {
-        assertEquals("1", Json.encodeToString(StrictBoolFromIntSerializer, true))
-        assertEquals("0", Json.encodeToString(StrictBoolFromIntSerializer, false))
+        val trueRes = fromStr("1", StrictBoolFromInt.asDeserialize())
+        assertEquals(true, trueRes.getOrThrow())
 
-        assertEquals(true, Json.decodeFromString(StrictBoolFromIntSerializer, "1"))
-        assertEquals(false, Json.decodeFromString(StrictBoolFromIntSerializer, "0"))
+        val failRes2 = fromStr("2", StrictBoolFromInt.asDeserialize())
+        assertTrue(failRes2.isFailure)
 
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(StrictBoolFromIntSerializer, "2")
-        }
+        val failResNeg = fromStr("-100", StrictBoolFromInt.asDeserialize())
+        assertTrue(failResNeg.isFailure)
     }
 
     @Test
     fun testFlexibleBoolFromInt() {
-        assertEquals(true, Json.decodeFromString(FlexibleBoolFromIntSerializer, "5"))
-        assertEquals(false, Json.decodeFromString(FlexibleBoolFromIntSerializer, "0"))
+        val trueRes = fromStr("5", FlexibleBoolFromInt.asDeserialize())
+        assertEquals(true, trueRes.getOrThrow())
+
+        val falseRes = fromStr("0", FlexibleBoolFromInt.asDeserialize())
+        assertEquals(false, falseRes.getOrThrow())
     }
 }

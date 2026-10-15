@@ -1,84 +1,91 @@
 // port-lint: source with_suffix.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonEncoder
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-
-/**
- * Transforms JSON object field names by adding a suffix on serialization and stripping it on deserialization.
- */
-class WithSuffixSerializer<T>(
-    private val suffix: String,
-    private val delegate: KSerializer<T>,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor = delegate.descriptor
-
-    override fun serialize(encoder: Encoder, value: T) {
-        if (encoder is JsonEncoder) {
-            val jsonTree = encoder.json.encodeToJsonElement(delegate, value)
-            if (jsonTree is JsonObject) {
-                val suffixedMap = mutableMapOf<String, JsonElement>()
-                for ((k, v) in jsonTree) {
-                    suffixedMap["$k$suffix"] = v
-                }
-                encoder.encodeJsonElement(JsonObject(suffixedMap))
-                return
-            }
-        }
-        delegate.serialize(encoder, value)
-    }
-
-    override fun deserialize(decoder: Decoder): T {
-        if (decoder is JsonDecoder) {
-            val jsonTree = decoder.decodeJsonElement()
-            if (jsonTree is JsonObject) {
-                val strippedMap = mutableMapOf<String, JsonElement>()
-                for ((k, v) in jsonTree) {
-                    if (k.endsWith(suffix)) {
-                        strippedMap[k.removeSuffix(suffix)] = v
-                    }
-                }
-                return decoder.json.decodeFromJsonElement(delegate, JsonObject(strippedMap))
-            }
-        }
-        return delegate.deserialize(decoder)
-    }
-}
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.DeserializeSeed
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.SerializeMap
+import io.github.kotlinmania.serdecore.ser.Serializer
+import io.github.kotlinmania.serdejson.JsonMap
+import io.github.kotlinmania.serdejson.Value
 
 /**
  * Adapter that adds a suffix onto field/map names during serialization
- * and trims away the suffix during deserialization.
+ * and trims away the suffix during deserialization using Serde.
  */
-class WithSuffixMapSerializer<V>(
+class WithSuffixMap<V>(
     val suffix: String,
-    valueSerializer: KSerializer<V>,
-) : KSerializer<Map<String, V>> {
-    private val delegate = MapSerializer(String.serializer(), valueSerializer)
-    override val descriptor: SerialDescriptor = delegate.descriptor
-
-    override fun serialize(encoder: Encoder, value: Map<String, V>) {
-        val suffixedMap = value.mapKeys { (k, _) -> "$k$suffix" }
-        delegate.serialize(encoder, suffixedMap)
+    private val valueAs: SerializeAs<V>? = null,
+    private val valueDe: DeserializeAs<V>? = null,
+) : SerializeAs<Map<String, V>>,
+    DeserializeAs<Map<String, V>> {
+    override fun <Ok> serializeAs(source: Map<String, V>, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val mapResult = serializer.serializeMap(source.size)
+        if (mapResult.isFailure) return SerdeResult.failure(mapResult.unwrapErr())
+        val map: SerializeMap<Ok> = mapResult.getOrThrow()
+        for ((k, v) in source) {
+            val suffixedKey = "$k$suffix"
+            val kRes = map.serializeKey(SerializePrimitive(suffixedKey))
+            if (kRes.isFailure) return SerdeResult.failure(kRes.unwrapErr())
+            val vSer =
+                if (valueAs != null) {
+                    SerializeAsWrap(v, valueAs)
+                } else if (v is Serialize) {
+                    v
+                } else {
+                    SerializePrimitive(v)
+                }
+            val vRes = map.serializeValue(vSer)
+            if (vRes.isFailure) return SerdeResult.failure(vRes.unwrapErr())
+        }
+        return map.end()
     }
 
-    override fun deserialize(decoder: Decoder): Map<String, V> {
-        val map = delegate.deserialize(decoder)
-        val result = mutableMapOf<String, V>()
-        for ((k, v) in map) {
-            if (k.endsWith(suffix)) {
-                result[k.removeSuffix(suffix)] = v
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Map<String, V>> {
+        val vde = valueDe ?: return SerdeResult.failure(SerdeError.custom("Missing value deserializer"))
+        val stringSeed =
+            object : DeserializeSeed<String> {
+                override fun <D> deserialize(deserializer: D): SerdeResult<String> where D : Deserializer =
+                    deserializer.deserializeStr(
+                        object : Visitor<String> {
+                            override fun expecting(): String = "a string key"
+
+                            override fun visitStr(v: String): SerdeResult<String> = SerdeResult.success(v)
+                        },
+                    )
             }
-        }
-        return result
+        val vSeed =
+            object : DeserializeSeed<V> {
+                override fun <D> deserialize(deserializer: D): SerdeResult<V> where D : Deserializer =
+                    vde.deserializeAs(deserializer)
+            }
+
+        return deserializer.deserializeMap(
+            object : Visitor<Map<String, V>> {
+                override fun expecting(): String = "a map"
+
+                override fun <A> visitMap(access: A): SerdeResult<Map<String, V>> where A : MapAccess {
+                    val result = mutableMapOf<String, V>()
+                    while (true) {
+                        val keyResult = access.nextKeySeed(stringSeed)
+                        if (keyResult.isFailure) return SerdeResult.failure(keyResult.unwrapErr())
+                        val key = keyResult.getOrThrow() ?: break
+                        if (key.endsWith(suffix)) {
+                            val valResult = access.nextValueSeed(vSeed)
+                            if (valResult.isFailure) return SerdeResult.failure(valResult.unwrapErr())
+                            result[key.removeSuffix(suffix)] = valResult.getOrThrow()
+                        } else {
+                            access.nextValueSeed(IgnoreAnySeed)
+                        }
+                    }
+                    return SerdeResult.success(result)
+                }
+            },
+        )
     }
 }
 
@@ -89,7 +96,8 @@ object WithSuffix {
     /**
      * Adds [suffix] to all keys in [map].
      */
-    fun <V> addSuffix(map: Map<String, V>, suffix: String): Map<String, V> = map.mapKeys { (k, _) -> "$k$suffix" }
+    fun <V> addSuffix(map: Map<String, V>, suffix: String): Map<String, V> =
+        map.mapKeys { (k, _) -> "$k$suffix" }
 
     /**
      * Filters and strips [suffix] from matching keys in [map].
@@ -107,22 +115,24 @@ object WithSuffix {
     /**
      * Adds [suffix] to all keys in [jsonObject].
      */
-    fun addSuffix(jsonObject: JsonObject, suffix: String): JsonObject =
-        buildJsonObject {
-            for ((k, v) in jsonObject) {
-                put("$k$suffix", v)
-            }
+    fun addSuffix(jsonObject: Value.Object, suffix: String): Value.Object {
+        val newMap = JsonMap.new()
+        for ((k, v) in jsonObject.value) {
+            newMap.insert("$k$suffix", v)
         }
+        return Value.Object(newMap)
+    }
 
     /**
      * Filters and strips [suffix] from matching keys in [jsonObject].
      */
-    fun stripSuffix(jsonObject: JsonObject, suffix: String): JsonObject =
-        buildJsonObject {
-            for ((k, v) in jsonObject) {
-                if (k.endsWith(suffix)) {
-                    put(k.removeSuffix(suffix), v)
-                }
+    fun stripSuffix(jsonObject: Value.Object, suffix: String): Value.Object {
+        val newMap = JsonMap.new()
+        for ((k, v) in jsonObject.value) {
+            if (k.endsWith(suffix)) {
+                newMap.insert(k.removeSuffix(suffix), v)
             }
         }
+        return Value.Object(newMap)
+    }
 }

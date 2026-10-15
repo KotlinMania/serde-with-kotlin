@@ -1,58 +1,55 @@
 // port-lint: source flatten_maybe.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.ser.Serializer
+import io.github.kotlinmania.serdejson.JsonDeserializer
+import io.github.kotlinmania.serdejson.JsonMap
+import io.github.kotlinmania.serdejson.JsonParser
+import io.github.kotlinmania.serdejson.Value
 
 /**
  * Helper for deserializing a field that might be present either in flattened form
- * (top-level properties in the parent JSON object) or nested form (under [fieldName]).
+ * or nested form under [fieldName] using Serde.
  */
-class FlattenedMaybeSerializer<T>(
+class FlattenedMaybe<T>(
     private val fieldName: String,
-    private val serializer: KSerializer<T>,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: T) {
-        serializer.serialize(encoder, value)
+    private val elementAs: SerializeAs<T>? = null,
+    private val elementDe: DeserializeAs<T>? = null,
+) : SerializeAs<T>,
+    DeserializeAs<T> {
+    override fun <Ok> serializeAs(source: T, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val element = elementAs ?: return SerdeResult.failure(SerdeError("Missing element serializer"))
+        return element.serializeAs(source, serializer)
     }
 
-    override fun deserialize(decoder: Decoder): T {
-        if (decoder is JsonDecoder) {
-            val json = decoder.json
-            val root = decoder.decodeJsonElement()
-            if (root is JsonObject) {
-                val hasNested = root.containsKey(fieldName)
-                val nestedElement = root[fieldName]
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> {
+        val de = elementDe ?: return SerdeResult.failure(SerdeError("Missing element deserializer"))
 
-                // Also check if any flattened fields can be parsed
-                val remainingFields =
-                    buildJsonObject {
-                        for ((k, v) in root) {
-                            if (k != fieldName) {
-                                put(k, v)
-                            }
-                        }
-                    }
+        val mapResult = JsonMap.deserialize(deserializer)
+        if (mapResult.isFailure) return SerdeResult.failure(mapResult.unwrapErr())
+        val map = mapResult.getOrThrow()
 
-                if (hasNested && nestedElement != null) {
-                    // Nested representation
-                    return json.decodeFromJsonElement(serializer, nestedElement)
-                } else if (remainingFields.isNotEmpty()) {
-                    // Try flattened representation
-                    return json.decodeFromJsonElement(serializer, remainingFields)
-                } else {
-                    throw SerializationException("Missing field `$fieldName` in either flattened or nested form")
+        val nested = map.get(fieldName)
+        if (nested != null) {
+            val jsonStr = nested.toString()
+            val parser = JsonParser(jsonStr)
+            return de.deserializeAs(JsonDeserializer(parser))
+        } else {
+            val remaining = JsonMap.new()
+            for ((k, v) in map) {
+                if (k != fieldName) {
+                    remaining.insert(k, v)
                 }
             }
+            if (remaining.isNotEmpty()) {
+                val jsonStr = Value.Object(remaining).toString()
+                val parser = JsonParser(jsonStr)
+                return de.deserializeAs(JsonDeserializer(parser))
+            }
         }
-        return serializer.deserialize(decoder)
+        return SerdeResult.failure(SerdeError("missing field: $fieldName"))
     }
 }

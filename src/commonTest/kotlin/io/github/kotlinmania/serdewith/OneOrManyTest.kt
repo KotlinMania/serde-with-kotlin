@@ -1,29 +1,33 @@
-// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class OneOrManyTest {
     @Test
     fun testOneOrManyPreferOne() {
-        val serializer = OneOrManySerializer(Int.serializer(), PreferOne)
+        val adapter = OneOrMany(IntAsString, IntAsString, PreferOne)
+        val de = adapter.asDeserialize()
 
         // Single element array decodes as list of 1
-        assertEquals(listOf(42), Json.decodeFromString(serializer, "42"))
-        assertEquals(listOf(42), Json.decodeFromString(serializer, "[42]"))
-        assertEquals(listOf(1, 2, 3), Json.decodeFromString(serializer, "[1, 2, 3]"))
+        assertEquals(listOf(42), fromStr("\"42\"", de).getOrThrow())
+        assertEquals(listOf(42), fromStr("[\"42\"]", de).getOrThrow())
+        assertEquals(listOf(1, 2, 3), fromStr("[\"1\",\"2\",\"3\"]", de).getOrThrow())
 
         // Single element list encodes as single element in PreferOne
-        assertEquals("42", Json.encodeToString(serializer, listOf(42)))
-        assertEquals("[1,2,3]", Json.encodeToString(serializer, listOf(1, 2, 3)))
+        val singleWrap = SerializeAsWrap(listOf(42), adapter)
+        assertEquals("\"42\"", toStr(singleWrap).getOrThrow())
+
+        val manyWrap = SerializeAsWrap(listOf(1, 2, 3), adapter)
+        assertEquals("[\"1\",\"2\",\"3\"]", toStr(manyWrap).getOrThrow())
     }
 
     @Test
     fun testOneOrManyPreferMany() {
-        val serializer = OneOrManySerializer(Int.serializer(), PreferMany)
-        assertEquals("[42]", Json.encodeToString(serializer, listOf(42)))
+        val adapter = OneOrMany(IntAsString, IntAsString, PreferMany)
+        val wrap = SerializeAsWrap(listOf(42), adapter)
+        assertEquals("[\"42\"]", toStr(wrap).getOrThrow())
     }
 }

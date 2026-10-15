@@ -1,50 +1,60 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
- * Serializes and deserializes a [List] as a single delimited string.
+ * Serializes and deserializes a [List] as a single delimited string using Serde.
  */
-class StringListWithSeparatorSerializer<T>(
+class StringWithSeparator<T>(
     private val separator: Separator,
     private val itemToString: (T) -> String = { it.toString() },
     private val stringToItem: (String) -> T,
-) : KSerializer<List<T>> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.StringListWithSeparator", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: List<T>) {
-        val str = value.joinToString(separator = separator.separator()) { itemToString(it) }
-        encoder.encodeString(str)
+) : SerializeAs<List<T>>,
+    DeserializeAs<List<T>> {
+    override fun <Ok> serializeAs(source: List<T>, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val str = source.joinToString(separator = separator.separator()) { itemToString(it) }
+        return serializer.serializeStr(str)
     }
 
-    override fun deserialize(decoder: Decoder): List<T> {
-        val text = decoder.decodeString()
-        if (text.isEmpty()) return emptyList()
-        val sep = separator.separator()
-        val parts = text.split(sep)
-        return parts.map { stringToItem(it) }
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<List<T>> =
+        deserializer.deserializeStr(
+            object : Visitor<List<T>> {
+                override fun expecting(): String = "a delimited string"
+
+                override fun visitStr(v: String): SerdeResult<List<T>> =
+                    serdeCatching {
+                        if (v.isEmpty()) {
+                            emptyList()
+                        } else {
+                            val sep = separator.separator()
+                            v.split(sep).map { stringToItem(it) }
+                        }
+                    }
+            },
+        )
 }
 
-/**
- * Serializes a list of strings separated by comma.
- */
-object CommaSeparatedStringListSerializer : KSerializer<List<String>> by StringListWithSeparatorSerializer(
-    separator = CommaSeparator,
-    stringToItem = { it },
-)
+/** Predefined separator adapters for lists of strings. */
+object CommaSeparatedStringList :
+    SerializeAs<List<String>> by StringWithSeparator(
+        separator = CommaSeparator,
+        stringToItem = { it },
+    ),
+    DeserializeAs<List<String>> by StringWithSeparator(
+        separator = CommaSeparator,
+        stringToItem = { it },
+    )
 
-/**
- * Serializes a list of strings separated by space.
- */
-object SpaceSeparatedStringListSerializer : KSerializer<List<String>> by StringListWithSeparatorSerializer(
-    separator = SpaceSeparator,
-    stringToItem = { it },
-)
+object SpaceSeparatedStringList :
+    SerializeAs<List<String>> by StringWithSeparator(
+        separator = SpaceSeparator,
+        stringToItem = { it },
+    ),
+    DeserializeAs<List<String>> by StringWithSeparator(
+        separator = SpaceSeparator,
+        stringToItem = { it },
+    )

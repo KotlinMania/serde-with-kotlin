@@ -1,12 +1,11 @@
 // port-lint: source rust.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonNull
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * Tri-state optional representation distinguishing between:
@@ -35,75 +34,60 @@ sealed class DoubleOption<out T> {
 }
 
 /**
- * Serializer for [DoubleOption].
+ * Adapter for [DoubleOption] using Serde.
  */
-@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
-class DoubleOptionSerializer<T>(
-    private val elementSerializer: KSerializer<T>,
-) : KSerializer<DoubleOption<T>> {
-    override val descriptor: SerialDescriptor = elementSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: DoubleOption<T>) {
-        when (value) {
+class DoubleOptionAdapter<T>(
+    private val elementAs: SerializeAs<T>? = null,
+    private val elementDe: DeserializeAs<T>? = null,
+) : SerializeAs<DoubleOption<T>>,
+    DeserializeAs<DoubleOption<T>> {
+    override fun <Ok> serializeAs(source: DoubleOption<T>, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        when (source) {
             is DoubleOption.Missing -> {
-                // Typically omitted or encoded as null depending on format
+                serializer.serializeNone()
             }
 
             is DoubleOption.Null -> {
-                encoder.encodeNull()
+                serializer.serializeNone()
             }
 
             is DoubleOption.Value -> {
-                elementSerializer.serialize(encoder, value.value)
+                if (elementAs != null) {
+                    elementAs.serializeAs(source.value, serializer)
+                } else if (source.value is Serialize) {
+                    source.value.serialize(serializer)
+                } else {
+                    SerializePrimitive(source.value).serialize(serializer)
+                }
             }
         }
-    }
 
-    override fun deserialize(decoder: Decoder): DoubleOption<T> {
-        if (decoder is JsonDecoder) {
-            val elem = decoder.decodeJsonElement()
-            return if (elem is JsonNull) {
-                DoubleOption.Null
-            } else {
-                val value = decoder.json.decodeFromJsonElement(elementSerializer, elem)
-                DoubleOption.Value(value)
-            }
-        }
-        return if (!decoder.decodeNotNullMark()) {
-            decoder.decodeNull()
-            DoubleOption.Null
-        } else {
-            DoubleOption.Value(elementSerializer.deserialize(decoder))
-        }
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<DoubleOption<T>> =
+        deserializer.deserializeOption(
+            object : Visitor<DoubleOption<T>> {
+                override fun expecting(): String = "an optional value"
+
+                override fun visitNone(): SerdeResult<DoubleOption<T>> =
+                    SerdeResult.success(DoubleOption.Null)
+
+                override fun <D> visitSome(deserializer: D): SerdeResult<DoubleOption<T>> where D : Deserializer {
+                    val de = elementDe
+                    return if (de != null) {
+                        de.deserializeAs(deserializer).map { DoubleOption.Value(it) }
+                    } else {
+                        SerdeResult.success(DoubleOption.Null)
+                    }
+                }
+            },
+        )
 }
 
 /**
- * Serializer that deserializes any value, ignores it, and returns the given default value.
+ * Adapter that deserializes any value, ignores it, and returns the given default value.
  */
-@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
-class DeserializeIgnoreAnySerializer<T>(
+class DeserializeIgnoreAny<T>(
     private val defaultValue: () -> T,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor =
-        DisplayFromStrSerializer("io.github.kotlinmania.serdewith.IgnoreAny", { "" }, { "" }).descriptor
-
-    override fun serialize(encoder: Encoder, value: T) {
-        // No-op or encode empty string
-        value.hashCode()
-        encoder.encodeString("")
-    }
-
-    override fun deserialize(decoder: Decoder): T {
-        if (decoder is JsonDecoder) {
-            decoder.decodeJsonElement() // consume and ignore
-        } else {
-            try {
-                decoder.decodeString()
-            } catch (_: Exception) {
-                // Ignore decoding error
-            }
-        }
-        return defaultValue()
-    }
+) : DeserializeAs<T> {
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> =
+        IgnoreAnySeed.deserialize(deserializer).map { defaultValue() }
 }

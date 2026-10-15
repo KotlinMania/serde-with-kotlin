@@ -1,12 +1,11 @@
 // port-lint: source hex.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * Hex encoding and decoding utilities.
@@ -48,23 +47,30 @@ object HexCodec {
 }
 
 /**
- * Hex serializer for [ByteArray].
+ * Hex adapter for [ByteArray] using Serde.
  */
-open class HexSerializer(
+open class Hex(
     private val uppercase: Boolean = false,
-) : KSerializer<ByteArray> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.Hex", PrimitiveKind.STRING)
+) : SerializeAs<ByteArray>,
+    DeserializeAs<ByteArray> {
+    override fun <Ok> serializeAs(source: ByteArray, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeStr(HexCodec.encode(source, uppercase))
 
-    override fun serialize(encoder: Encoder, value: ByteArray) {
-        encoder.encodeString(HexCodec.encode(value, uppercase))
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<ByteArray> =
+        deserializer.deserializeStr(
+            object : Visitor<ByteArray> {
+                override fun expecting(): String = "a hex string"
 
-    override fun deserialize(decoder: Decoder): ByteArray = HexCodec.decode(decoder.decodeString())
+                override fun visitStr(v: String): SerdeResult<ByteArray> =
+                    serdeCatching {
+                        HexCodec.decode(v)
+                    }
+            },
+        )
 }
 
-/** Lowercase Hex serializer for [ByteArray]. */
-object HexLowercaseSerializer : HexSerializer(uppercase = false)
+/** Lowercase Hex adapter for [ByteArray]. */
+object HexLowercase : Hex(uppercase = false)
 
-/** Uppercase Hex serializer for [ByteArray]. */
-object HexUppercaseSerializer : HexSerializer(uppercase = true)
+/** Uppercase Hex adapter for [ByteArray]. */
+object HexUppercase : Hex(uppercase = true)

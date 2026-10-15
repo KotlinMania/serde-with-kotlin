@@ -1,12 +1,9 @@
-// port-lint: source utils/duration.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
@@ -18,122 +15,168 @@ import kotlin.time.Instant
 /**
  * Serializes [Duration] as integer seconds.
  */
-object DurationSecondsSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.DurationSeconds", PrimitiveKind.LONG)
+object DurationSeconds : SerializeAs<Duration>, DeserializeAs<Duration> {
+    override fun <Ok> serializeAs(source: Duration, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.inWholeSeconds)
 
-    override fun serialize(encoder: Encoder, value: Duration) {
-        encoder.encodeLong(value.inWholeSeconds)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Duration> =
+        deserializer.deserializeI64(
+            object : Visitor<Duration> {
+                override fun expecting(): String = "integer seconds"
 
-    override fun deserialize(decoder: Decoder): Duration = decoder.decodeLong().seconds
+                override fun visitI64(v: Long): SerdeResult<Duration> = SerdeResult.success(v.seconds)
+
+                override fun visitU64(v: ULong): SerdeResult<Duration> = SerdeResult.success(v.toLong().seconds)
+            },
+        )
 }
 
 /**
  * Serializes [Duration] as fractional seconds [Double].
  */
-object DurationSecondsWithFracSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.DurationSecondsWithFrac", PrimitiveKind.DOUBLE)
+object DurationSecondsWithFrac : SerializeAs<Duration>, DeserializeAs<Duration> {
+    override fun <Ok> serializeAs(source: Duration, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeF64(source.toDouble(DurationUnit.SECONDS))
 
-    override fun serialize(encoder: Encoder, value: Duration) {
-        encoder.encodeDouble(value.toDouble(DurationUnit.SECONDS))
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Duration> =
+        deserializer.deserializeF64(
+            object : Visitor<Duration> {
+                override fun expecting(): String = "floating point or integer seconds"
 
-    override fun deserialize(decoder: Decoder): Duration {
-        val secs = decoder.decodeDouble()
-        return (secs * 1_000_000_000.0).toLong().nanoseconds
-    }
+                override fun visitF64(v: Double): SerdeResult<Duration> =
+                    SerdeResult.success((v * 1_000_000_000.0).toLong().nanoseconds)
+
+                override fun visitI64(v: Long): SerdeResult<Duration> = SerdeResult.success(v.seconds)
+
+                override fun visitU64(v: ULong): SerdeResult<Duration> = SerdeResult.success(v.toLong().seconds)
+            },
+        )
 }
 
 /**
  * Serializes [Duration] as milliseconds [Long].
  */
-object DurationMillisSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.DurationMillis", PrimitiveKind.LONG)
+object DurationMillis : SerializeAs<Duration>, DeserializeAs<Duration> {
+    override fun <Ok> serializeAs(source: Duration, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.inWholeMilliseconds)
 
-    override fun serialize(encoder: Encoder, value: Duration) {
-        encoder.encodeLong(value.inWholeMilliseconds)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Duration> =
+        deserializer.deserializeI64(
+            object : Visitor<Duration> {
+                override fun expecting(): String = "integer milliseconds"
 
-    override fun deserialize(decoder: Decoder): Duration = decoder.decodeLong().milliseconds
+                override fun visitI64(v: Long): SerdeResult<Duration> = SerdeResult.success(v.milliseconds)
+
+                override fun visitU64(v: ULong): SerdeResult<Duration> = SerdeResult.success(v.toLong().milliseconds)
+            },
+        )
 }
 
 /**
  * Serializes [Duration] as microseconds [Long].
  */
-object DurationMicrosSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.DurationMicros", PrimitiveKind.LONG)
+object DurationMicros : SerializeAs<Duration>, DeserializeAs<Duration> {
+    override fun <Ok> serializeAs(source: Duration, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.inWholeMicroseconds)
 
-    override fun serialize(encoder: Encoder, value: Duration) {
-        encoder.encodeLong(value.inWholeMicroseconds)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Duration> =
+        deserializer.deserializeI64(
+            object : Visitor<Duration> {
+                override fun expecting(): String = "integer microseconds"
 
-    override fun deserialize(decoder: Decoder): Duration = decoder.decodeLong().microseconds
+                override fun visitI64(v: Long): SerdeResult<Duration> = SerdeResult.success(v.microseconds)
+
+                override fun visitU64(v: ULong): SerdeResult<Duration> = SerdeResult.success(v.toLong().microseconds)
+            },
+        )
 }
 
 /**
  * Serializes [Duration] as nanoseconds [Long].
  */
-object DurationNanosSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.DurationNanos", PrimitiveKind.LONG)
+object DurationNanos : SerializeAs<Duration>, DeserializeAs<Duration> {
+    override fun <Ok> serializeAs(source: Duration, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.inWholeNanoseconds)
 
-    override fun serialize(encoder: Encoder, value: Duration) {
-        encoder.encodeLong(value.inWholeNanoseconds)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Duration> =
+        deserializer.deserializeI64(
+            object : Visitor<Duration> {
+                override fun expecting(): String = "integer nanoseconds"
 
-    override fun deserialize(decoder: Decoder): Duration = decoder.decodeLong().nanoseconds
+                override fun visitI64(v: Long): SerdeResult<Duration> = SerdeResult.success(v.nanoseconds)
+
+                override fun visitU64(v: ULong): SerdeResult<Duration> = SerdeResult.success(v.toLong().nanoseconds)
+            },
+        )
 }
 
 /**
  * Serializes [Instant] as integer seconds since Unix epoch.
  */
-object TimestampSecondsSerializer : KSerializer<Instant> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.TimestampSeconds", PrimitiveKind.LONG)
+object TimestampSeconds : SerializeAs<Instant>, DeserializeAs<Instant> {
+    override fun <Ok> serializeAs(source: Instant, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.epochSeconds)
 
-    override fun serialize(encoder: Encoder, value: Instant) {
-        encoder.encodeLong(value.epochSeconds)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Instant> =
+        deserializer.deserializeI64(
+            object : Visitor<Instant> {
+                override fun expecting(): String = "integer seconds since epoch"
 
-    override fun deserialize(decoder: Decoder): Instant = Instant.fromEpochSeconds(decoder.decodeLong())
+                override fun visitI64(v: Long): SerdeResult<Instant> = SerdeResult.success(Instant.fromEpochSeconds(v))
+
+                override fun visitU64(v: ULong): SerdeResult<Instant> =
+                    SerdeResult.success(Instant.fromEpochSeconds(v.toLong()))
+            },
+        )
 }
 
 /**
  * Serializes [Instant] as fractional seconds [Double] since Unix epoch.
  */
-object TimestampSecondsWithFracSerializer : KSerializer<Instant> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.TimestampSecondsWithFrac", PrimitiveKind.DOUBLE)
-
-    override fun serialize(encoder: Encoder, value: Instant) {
-        val secs = value.epochSeconds.toDouble() + (value.nanosecondsOfSecond.toDouble() / 1_000_000_000.0)
-        encoder.encodeDouble(secs)
+object TimestampSecondsWithFrac : SerializeAs<Instant>, DeserializeAs<Instant> {
+    override fun <Ok> serializeAs(source: Instant, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val secs = source.epochSeconds.toDouble() + (source.nanosecondsOfSecond.toDouble() / 1_000_000_000.0)
+        return serializer.serializeF64(secs)
     }
 
-    override fun deserialize(decoder: Decoder): Instant {
-        val secs = decoder.decodeDouble()
-        val wholeSecs = secs.toLong()
-        val nano = ((secs - wholeSecs.toDouble()) * 1_000_000_000.0).toLong()
-        return Instant.fromEpochSeconds(wholeSecs, nano)
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Instant> =
+        deserializer.deserializeF64(
+            object : Visitor<Instant> {
+                override fun expecting(): String = "floating point or integer seconds since epoch"
+
+                override fun visitF64(v: Double): SerdeResult<Instant> {
+                    val wholeSecs = v.toLong()
+                    val nano = ((v - wholeSecs.toDouble()) * 1_000_000_000.0).toLong()
+                    return SerdeResult.success(Instant.fromEpochSeconds(wholeSecs, nano))
+                }
+
+                override fun visitI64(v: Long): SerdeResult<Instant> = SerdeResult.success(Instant.fromEpochSeconds(v))
+
+                override fun visitU64(v: ULong): SerdeResult<Instant> =
+                    SerdeResult.success(Instant.fromEpochSeconds(v.toLong()))
+            },
+        )
 }
 
 /**
  * Serializes [Instant] as milliseconds since Unix epoch.
  */
-object TimestampMillisSerializer : KSerializer<Instant> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.TimestampMillis", PrimitiveKind.LONG)
+object TimestampMillis : SerializeAs<Instant>, DeserializeAs<Instant> {
+    override fun <Ok> serializeAs(source: Instant, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(source.toEpochMilliseconds())
 
-    override fun serialize(encoder: Encoder, value: Instant) {
-        encoder.encodeLong(value.toEpochMilliseconds())
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Instant> =
+        deserializer.deserializeI64(
+            object : Visitor<Instant> {
+                override fun expecting(): String = "integer milliseconds since epoch"
 
-    override fun deserialize(decoder: Decoder): Instant = Instant.fromEpochMilliseconds(decoder.decodeLong())
+                override fun visitI64(v: Long): SerdeResult<Instant> =
+                    SerdeResult.success(Instant.fromEpochMilliseconds(v))
+
+                override fun visitU64(v: ULong): SerdeResult<Instant> =
+                    SerdeResult.success(Instant.fromEpochMilliseconds(v.toLong()))
+            },
+        )
 }
 
 /**
@@ -145,14 +188,57 @@ enum class Sign {
 }
 
 /**
- * Error during parsing floating-point seconds.
+ * Error kinds for float parsing errors.
  */
-sealed class ParseFloatError : Exception() {
-    data object InvalidValue : ParseFloatError()
+enum class ParseFloatErrorKind {
+    INVALID_VALUE,
+    CUSTOM,
+}
 
-    data class Custom(
-        override val message: String,
-    ) : ParseFloatError()
+/**
+ * Error during parsing floating-point seconds, strongly typed for Swift Export.
+ */
+class ParseFloatError(
+    val kind: ParseFloatErrorKind,
+    message: String,
+) : Exception(message) {
+    companion object {
+        fun invalidValue(): ParseFloatError =
+            ParseFloatError(ParseFloatErrorKind.INVALID_VALUE, "invalid value")
+
+        fun custom(message: String): ParseFloatError =
+            ParseFloatError(ParseFloatErrorKind.CUSTOM, message)
+    }
+}
+
+/**
+ * Flat result container for float parsing, satisfying SWIFT.md.
+ */
+class ParseFloatResult<out T> private constructor(
+    val value: T?,
+    val error: ParseFloatError?,
+) {
+    init {
+        require((value == null) != (error == null)) {
+            "ParseFloatResult must have exactly one of value or error"
+        }
+    }
+
+    fun isSuccess(): Boolean = value != null
+
+    fun isFailure(): Boolean = error != null
+
+    fun getOrNull(): T? = value
+
+    fun unwrapErr(): ParseFloatError = error ?: throw IllegalStateException("Expected error, got value: $value")
+
+    fun getOrThrow(): T = value ?: throw error!!
+
+    companion object {
+        fun <T> success(value: T): ParseFloatResult<T> = ParseFloatResult(value, null)
+
+        fun <T> failure(error: ParseFloatError): ParseFloatResult<T> = ParseFloatResult(null, error)
+    }
 }
 
 /**
@@ -167,7 +253,7 @@ data class TimeParts(
 /**
  * Parses a float string into sign, seconds, and subsecond nanoseconds.
  */
-fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
+fun parseFloatIntoTimeParts(valueStr: String): ParseFloatResult<TimeParts> {
     var value = valueStr
     val sign =
         when {
@@ -189,31 +275,33 @@ fun parseFloatIntoTimeParts(valueStr: String): Result<TimeParts> {
     val parts = value.split('.')
     return when (parts.size) {
         1 -> {
-            val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
-            Result.success(TimeParts(sign, seconds, 0u))
+            val seconds = parts[0].toULongOrNull() ?: return ParseFloatResult.failure(ParseFloatError.invalidValue())
+            ParseFloatResult.success(TimeParts(sign, seconds, 0u))
         }
 
         2 -> {
-            val seconds = parts[0].toULongOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
+            val seconds = parts[0].toULongOrNull() ?: return ParseFloatResult.failure(ParseFloatError.invalidValue())
             val subsecondsStr = parts[1]
             if (subsecondsStr.length > 9) {
-                return Result.failure(
-                    ParseFloatError.Custom(
+                return ParseFloatResult.failure(
+                    ParseFloatError.custom(
                         "Duration and Timestamps with no more than 9 digits precision, but '$valueStr' has more",
                     ),
                 )
             }
-            var subseconds = subsecondsStr.toUIntOrNull() ?: return Result.failure(ParseFloatError.InvalidValue)
+            var subseconds =
+                subsecondsStr.toUIntOrNull()
+                    ?: return ParseFloatResult.failure(ParseFloatError.invalidValue())
             var multiplier = 1u
             repeat(9 - subsecondsStr.length) {
                 multiplier *= 10u
             }
             subseconds *= multiplier
-            Result.success(TimeParts(sign, seconds, subseconds))
+            ParseFloatResult.success(TimeParts(sign, seconds, subseconds))
         }
 
         else -> {
-            Result.failure(ParseFloatError.InvalidValue)
+            ParseFloatResult.failure(ParseFloatError.invalidValue())
         }
     }
 }

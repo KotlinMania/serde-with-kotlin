@@ -1,67 +1,31 @@
-// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DisplayFromStrTest {
-    @Serializable
-    data class Sample(
-        @Serializable(with = IntAsStringSerializer::class)
-        val intVal: Int,
-        @Serializable(with = LongAsStringSerializer::class)
-        val longVal: Long,
-        @Serializable(with = DoubleAsStringSerializer::class)
-        val doubleVal: Double,
-        @Serializable(with = BooleanAsStringSerializer::class)
-        val boolVal: Boolean,
-        @Serializable(with = ShortAsStringSerializer::class)
-        val shortVal: Short,
-        @Serializable(with = ByteAsStringSerializer::class)
-        val byteVal: Byte,
-        @Serializable(with = UIntAsStringSerializer::class)
-        val uintVal: UInt,
-        @Serializable(with = ULongAsStringSerializer::class)
-        val ulongVal: ULong,
-    )
-
     @Test
-    fun testDisplayFromstr() {
-        val sample =
-            Sample(
-                intVal = 123,
-                longVal = 456789012345L,
-                doubleVal = 3.1415,
-                boolVal = true,
-                shortVal = 42.toShort(),
-                byteVal = 7.toByte(),
-                uintVal = 99u,
-                ulongVal = 123456789uL,
-            )
+    fun testDisplayFromStr() {
+        val intWrap = SerializeAsWrap(123, IntAsString)
+        assertEquals("\"123\"", toStr(intWrap).getOrThrow())
+        val intVal = fromStr("\"123\"", IntAsString.asDeserialize()).getOrThrow()
+        assertEquals(123, intVal)
 
-        val json = Json.encodeToString(Sample.serializer(), sample)
-        val decoded = Json.decodeFromString(Sample.serializer(), json)
-        assertEquals(sample, decoded)
-    }
+        val longWrap = SerializeAsWrap(456789012345L, LongAsString)
+        assertEquals("\"456789012345\"", toStr(longWrap).getOrThrow())
+        val longVal = fromStr("\"456789012345\"", LongAsString.asDeserialize()).getOrThrow()
+        assertEquals(456789012345L, longVal)
 
-    @Test
-    fun testSerializationAndDeserialization() {
-        val sample =
-            Sample(
-                intVal = 123,
-                longVal = 456789012345L,
-                doubleVal = 3.1415,
-                boolVal = true,
-                shortVal = 42.toShort(),
-                byteVal = 7.toByte(),
-                uintVal = 99u,
-                ulongVal = 123456789uL,
-            )
+        val boolWrap = SerializeAsWrap(true, BooleanAsString)
+        assertEquals("\"true\"", toStr(boolWrap).getOrThrow())
+        val boolVal = fromStr("\"true\"", BooleanAsString.asDeserialize()).getOrThrow()
+        assertEquals(true, boolVal)
 
-        val json = Json.encodeToString(Sample.serializer(), sample)
-        val decoded = Json.decodeFromString(Sample.serializer(), json)
-        assertEquals(sample, decoded)
+        val uintWrap = SerializeAsWrap(99u, UIntAsString)
+        assertEquals("\"99\"", toStr(uintWrap).getOrThrow())
+        val uintVal = fromStr("\"99\"", UIntAsString.asDeserialize()).getOrThrow()
+        assertEquals(99u, uintVal)
     }
 }

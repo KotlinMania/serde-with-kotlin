@@ -1,12 +1,11 @@
 // port-lint: source base64.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 import io.github.kotlinmania.base64.alphabet.Alphabet as Base64Charset
 
 /**
@@ -45,27 +44,6 @@ sealed interface Base64Alphabet {
         override val charset: Base64Charset = Base64Charset.IMAP_MUTF7
     }
 }
-
-/** An alias for [Base64Alphabet] matching upstream Rust `Alphabet` trait. */
-typealias Alphabet = Base64Alphabet
-
-/** Standard Base64 alphabet. */
-typealias StandardAlphabet = Base64Alphabet.Standard
-
-/** URL-safe Base64 alphabet. */
-typealias UrlSafeAlphabet = Base64Alphabet.UrlSafe
-
-/** Bcrypt Base64 alphabet. */
-typealias BcryptAlphabet = Base64Alphabet.Bcrypt
-
-/** BinHex Base64 alphabet. */
-typealias BinHexAlphabet = Base64Alphabet.BinHex
-
-/** Crypt Base64 alphabet. */
-typealias CryptAlphabet = Base64Alphabet.Crypt
-
-/** IMAP modified UTF-7 Base64 alphabet. */
-typealias ImapMutf7Alphabet = Base64Alphabet.ImapMutf7
 
 /**
  * Base64 encoding and decoding utilities backed by base64-kotlin alphabets.
@@ -172,43 +150,49 @@ object Base64Codec {
 }
 
 /**
- * Base64 serializer for [ByteArray].
+ * Base64 adapter for [ByteArray] using Serde.
  */
-open class Base64Serializer(
+open class Base64(
     private val alphabet: Base64Alphabet = Base64Alphabet.Standard,
     private val padded: Boolean = true,
-) : KSerializer<ByteArray> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("io.github.kotlinmania.serdewith.Base64", PrimitiveKind.STRING)
+) : SerializeAs<ByteArray>,
+    DeserializeAs<ByteArray> {
+    override fun <Ok> serializeAs(source: ByteArray, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeStr(Base64Codec.encode(source, alphabet, padded))
 
-    override fun serialize(encoder: Encoder, value: ByteArray) {
-        encoder.encodeString(Base64Codec.encode(value, alphabet, padded))
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<ByteArray> =
+        deserializer.deserializeStr(
+            object : Visitor<ByteArray> {
+                override fun expecting(): String = "a base64 encoded string"
 
-    override fun deserialize(decoder: Decoder): ByteArray =
-        Base64Codec.decode(decoder.decodeString(), alphabet)
+                override fun visitStr(v: String): SerdeResult<ByteArray> =
+                    serdeCatching {
+                        Base64Codec.decode(v, alphabet)
+                    }
+            },
+        )
 }
 
 /** Standard Base64 serializer with padding. */
-object Base64StandardPaddedSerializer : Base64Serializer(Base64Alphabet.Standard, true)
+object Base64StandardPadded : Base64(Base64Alphabet.Standard, true)
 
 /** Standard Base64 serializer without padding. */
-object Base64StandardUnpaddedSerializer : Base64Serializer(Base64Alphabet.Standard, false)
+object Base64StandardUnpadded : Base64(Base64Alphabet.Standard, false)
 
 /** URL-safe Base64 serializer with padding. */
-object Base64UrlSafePaddedSerializer : Base64Serializer(Base64Alphabet.UrlSafe, true)
+object Base64UrlSafePadded : Base64(Base64Alphabet.UrlSafe, true)
 
 /** URL-safe Base64 serializer without padding. */
-object Base64UrlSafeUnpaddedSerializer : Base64Serializer(Base64Alphabet.UrlSafe, false)
+object Base64UrlSafeUnpadded : Base64(Base64Alphabet.UrlSafe, false)
 
 /** Bcrypt Base64 serializer. */
-object Base64BcryptSerializer : Base64Serializer(Base64Alphabet.Bcrypt, false)
+object Base64Bcrypt : Base64(Base64Alphabet.Bcrypt, false)
 
 /** BinHex Base64 serializer. */
-object Base64BinHexSerializer : Base64Serializer(Base64Alphabet.BinHex, true)
+object Base64BinHex : Base64(Base64Alphabet.BinHex, true)
 
 /** Crypt Base64 serializer. */
-object Base64CryptSerializer : Base64Serializer(Base64Alphabet.Crypt, false)
+object Base64Crypt : Base64(Base64Alphabet.Crypt, false)
 
 /** IMAP modified UTF-7 Base64 serializer. */
-object Base64ImapMutf7Serializer : Base64Serializer(Base64Alphabet.ImapMutf7, false)
+object Base64ImapMutf7 : Base64(Base64Alphabet.ImapMutf7, false)

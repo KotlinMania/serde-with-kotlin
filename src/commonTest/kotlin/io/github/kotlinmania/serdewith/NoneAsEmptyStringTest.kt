@@ -1,7 +1,7 @@
-// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -9,10 +9,15 @@ import kotlin.test.assertNull
 class NoneAsEmptyStringTest {
     @Test
     fun testNoneAsEmptyString() {
-        assertEquals("\"\"", Json.encodeToString(NoneAsEmptyStringSerializer, null))
-        assertEquals("\"hello\"", Json.encodeToString(NoneAsEmptyStringSerializer, "hello"))
+        val nullWrap = SerializeAsWrap<String?, SerializeAs<String?>>(null, NoneAsEmptyString)
+        val helloWrap = SerializeAsWrap<String?, SerializeAs<String?>>("hello", NoneAsEmptyString)
 
-        assertNull(Json.decodeFromString(NoneAsEmptyStringSerializer, "\"\""))
-        assertEquals("hello", Json.decodeFromString(NoneAsEmptyStringSerializer, "\"hello\""))
+        assertEquals("\"\"", toStr(nullWrap).getOrThrow())
+        assertEquals("\"hello\"", toStr(helloWrap).getOrThrow())
+
+        val de = NoneAsEmptyString.asDeserialize()
+
+        assertNull(fromStr("\"\"", de).getOrThrow())
+        assertEquals("hello", fromStr("\"hello\"", de).getOrThrow())
     }
 }

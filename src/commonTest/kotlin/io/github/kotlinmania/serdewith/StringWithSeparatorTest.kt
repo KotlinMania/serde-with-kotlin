@@ -1,38 +1,32 @@
-// port-lint: tests lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class StringWithSeparatorTest {
     @Test
-    fun stringWithSeparator() {
-        val list = listOf("alpha", "beta", "gamma")
-        val json = Json.encodeToString(CommaSeparatedStringListSerializer, list)
-        assertEquals("\"alpha,beta,gamma\"", json)
-
-        val decoded = Json.decodeFromString(CommaSeparatedStringListSerializer, json)
-        assertEquals(list, decoded)
-    }
-
-    @Test
     fun testCommaSeparated() {
         val list = listOf("alpha", "beta", "gamma")
-        val json = Json.encodeToString(CommaSeparatedStringListSerializer, list)
+        val wrap = SerializeAsWrap(list, CommaSeparatedStringList)
+        val json = toStr(wrap).getOrThrow()
         assertEquals("\"alpha,beta,gamma\"", json)
 
-        val decoded = Json.decodeFromString(CommaSeparatedStringListSerializer, json)
+        val de = CommaSeparatedStringList.asDeserialize()
+        val decoded = fromStr(json, de).getOrThrow()
         assertEquals(list, decoded)
     }
 
     @Test
     fun testSpaceSeparated() {
         val list = listOf("hello", "world")
-        val json = Json.encodeToString(SpaceSeparatedStringListSerializer, list)
+        val wrap = SerializeAsWrap(list, SpaceSeparatedStringList)
+        val json = toStr(wrap).getOrThrow()
         assertEquals("\"hello world\"", json)
 
-        val decoded = Json.decodeFromString(SpaceSeparatedStringListSerializer, json)
+        val de = SpaceSeparatedStringList.asDeserialize()
+        val decoded = fromStr(json, de).getOrThrow()
         assertEquals(list, decoded)
     }
 }

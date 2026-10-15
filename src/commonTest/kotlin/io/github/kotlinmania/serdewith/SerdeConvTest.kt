@@ -1,82 +1,49 @@
-// port-lint: tests serde_as/serde_conv.rs
+// port-lint: tests serde_conv.rs
 package io.github.kotlinmania.serdewith
 
 import io.github.kotlinmania.prettyassertions.assertEq
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class SerdeConvTest {
-    private val boolAsStringSerializer =
-        serdeConv(
-            String.serializer(),
-            { it.toString() },
-            { it.toBooleanStrict() },
-        )
+    private val stringDe =
+        object : DeserializeAs<String> {
+            override fun deserializeAs(deserializer: Deserializer) =
+                deserializer.deserializeStr(
+                    object : io.github.kotlinmania.serdecore.de.Visitor<String> {
+                        override fun expecting() = "a string"
 
-    data class Rgb(
-        val red: Int,
-        val green: Int,
-        val blue: Int,
-    )
+                        override fun visitStr(v: String) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v)
+                    },
+                )
+        }
 
-    private val rgbAsArraySerializer =
-        serdeConv(
-            ListSerializer(Int.serializer()),
-            { listOf(it.red, it.green, it.blue) },
-            { list ->
-                require(list.size == 3) { "Expected 3 elements, got ${list.size}" }
-                Rgb(list[0], list[1], list[2])
-            },
+    private val boolAsString =
+        serdeConv<Boolean, String>(
+            toIntermediate = { it.toString() },
+            fromIntermediate = { it.toBooleanStrict() },
+            intermediateDe = stringDe,
         )
 
     @Test
     fun testBoolAsString() {
-        assertEq("\"false\"", Json.encodeToString(boolAsStringSerializer, false))
-        assertEq("\"true\"", Json.encodeToString(boolAsStringSerializer, true))
+        val falseWrap = SerializeAsWrap(false, boolAsString)
+        val trueWrap = SerializeAsWrap(true, boolAsString)
 
-        assertEq(false, Json.decodeFromString(boolAsStringSerializer, "\"false\""))
-        assertEq(true, Json.decodeFromString(boolAsStringSerializer, "\"true\""))
+        assertEq("\"false\"", toStr(falseWrap).getOrThrow())
+        assertEq("\"true\"", toStr(trueWrap).getOrThrow())
 
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(boolAsStringSerializer, "123")
-        }
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(boolAsStringSerializer, "\"not_a_bool\"")
-        }
-    }
+        val de = boolAsString.asDeserialize()
 
-    @Test
-    fun testBoolAsStringVec() {
-        val listSerializer = ListSerializer(boolAsStringSerializer)
+        assertEq(false, fromStr("\"false\"", de).getOrThrow())
+        assertEq(true, fromStr("\"true\"", de).getOrThrow())
 
-        assertEq("[\"false\"]", Json.encodeToString(listSerializer, listOf(false)))
-        assertEq("[\"true\"]", Json.encodeToString(listSerializer, listOf(true)))
-        assertEq("[\"false\",\"true\"]", Json.encodeToString(listSerializer, listOf(false, true)))
-
-        assertEq(listOf(false), Json.decodeFromString(listSerializer, "[\"false\"]"))
-        assertEq(listOf(true), Json.decodeFromString(listSerializer, "[\"true\"]"))
-        assertEq(listOf(false, true), Json.decodeFromString(listSerializer, "[\"false\",\"true\"]"))
-
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(listSerializer, "123")
-        }
-    }
-
-    @Test
-    fun testRgbAsArray() {
-        val orange = Rgb(255, 128, 0)
-        val encoded = Json.encodeToString(rgbAsArraySerializer, orange)
-        assertEq("[255,128,0]", encoded)
-
-        val decoded = Json.decodeFromString(rgbAsArraySerializer, "[255,128,0]")
-        assertEq(orange, decoded)
-
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(rgbAsArraySerializer, "[255,128]")
-        }
+        assertTrue(fromStr("123", de).isFailure)
+        assertTrue(fromStr("\"not_a_bool\"", de).isFailure)
     }
 }

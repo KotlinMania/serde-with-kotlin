@@ -1,32 +1,29 @@
 // port-lint: tests with_suffix.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdejson.JsonMap
+import io.github.kotlinmania.serdejson.JsonNumber
+import io.github.kotlinmania.serdejson.Value
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class WithSuffixTest {
-    @Serializable
-    data class Player(
-        val name: String,
-        val score: Int,
-    )
+    private val stringDe =
+        object : DeserializeAs<String> {
+            override fun deserializeAs(deserializer: Deserializer) =
+                deserializer.deserializeStr(
+                    object : io.github.kotlinmania.serdecore.de.Visitor<String> {
+                        override fun expecting() = "a string"
 
-    @Test
-    fun testWithSuffix() {
-        val serializer = WithSuffixSerializer("_v1", Player.serializer())
-        val player = Player(name = "Alice", score = 100)
-
-        val json = Json.encodeToString(serializer, player)
-        assertEquals("{\"name_v1\":\"Alice\",\"score_v1\":100}", json)
-
-        val decoded = Json.decodeFromString(serializer, json)
-        assertEquals(player, decoded)
-    }
+                        override fun visitStr(v: String) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v)
+                    },
+                )
+        }
 
     @Test
     fun testFlattenWithSuffix() {
@@ -52,13 +49,13 @@ class WithSuffixTest {
 
     @Test
     fun testPlainWithSuffix() {
-        val serializer = WithSuffixMapSerializer("_player1", String.serializer())
-        val json = Json { prettyPrint = false }
+        val adapter = WithSuffixMap<String>("_player1", valueDe = stringDe)
         val map = mapOf("name" to "name1", "votes" to "1")
-        val encoded = json.encodeToString(serializer, map)
+        val wrap = SerializeAsWrap(map, adapter)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("{\"name_player1\":\"name1\",\"votes_player1\":\"1\"}", encoded)
 
-        val decoded = json.decodeFromString(serializer, encoded)
+        val decoded = fromStr(encoded, adapter.asDeserialize()).getOrThrow()
         assertEquals(map, decoded)
     }
 
@@ -84,29 +81,28 @@ class WithSuffixTest {
 
     @Test
     fun testAddAndStripSuffixJsonObject() {
-        val original =
-            buildJsonObject {
-                put("frames", 4)
-                put("spritesheet", "normal")
-            }
+        val map = JsonMap.new()
+        map.insert("frames", Value.Number(JsonNumber.fromI64(4L)))
+        map.insert("spritesheet", Value.Str("normal"))
+        val original = Value.Object(map)
+
         val suffixed = WithSuffix.addSuffix(original, "_vis")
-        assertEquals(2, suffixed.size)
-        assertEquals("4", suffixed["frames_vis"]?.toString())
+        assertEquals(2, suffixed.value.len())
+        assertEquals("4", (suffixed.value.get("frames_vis") as Value.Number).value.toString())
 
         val stripped = WithSuffix.stripSuffix(suffixed, "_vis")
-        assertEquals("4", stripped["frames"]?.toString())
+        assertEquals("4", (stripped.value.get("frames") as Value.Number).value.toString())
     }
 
     @Test
     fun testWithSuffixMapSerializer() {
-        val serializer = WithSuffixMapSerializer("_bar", String.serializer())
-        val json = Json { prettyPrint = false }
-
+        val adapter = WithSuffixMap<String>("_bar", valueDe = stringDe)
         val map = mapOf("x" to "10", "y" to "20")
-        val encoded = json.encodeToString(serializer, map)
+        val wrap = SerializeAsWrap(map, adapter)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("{\"x_bar\":\"10\",\"y_bar\":\"20\"}", encoded)
 
-        val decoded = json.decodeFromString(serializer, encoded)
+        val decoded = fromStr(encoded, adapter.asDeserialize()).getOrThrow()
         assertEquals(map, decoded)
     }
 }

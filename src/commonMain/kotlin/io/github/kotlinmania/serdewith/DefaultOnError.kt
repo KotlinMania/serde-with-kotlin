@@ -1,68 +1,54 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonNull
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
- * Returns a default value if deserialization throws an exception.
+ * Returns a default value if deserialization fails.
  */
-class DefaultOnErrorSerializer<T>(
-    private val elementSerializer: KSerializer<T>,
+class DefaultOnError<T>(
+    private val elementAs: SerializeAs<T>,
+    private val elementDe: DeserializeAs<T>,
     private val defaultValue: () -> T,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor = elementSerializer.descriptor
+) : SerializeAs<T>,
+    DeserializeAs<T> {
+    override fun <Ok> serializeAs(source: T, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        elementAs.serializeAs(source, serializer)
 
-    override fun serialize(encoder: Encoder, value: T) {
-        elementSerializer.serialize(encoder, value)
-    }
-
-    override fun deserialize(decoder: Decoder): T =
-        if (decoder is JsonDecoder) {
-            try {
-                val elem = decoder.decodeJsonElement()
-                decoder.json.decodeFromJsonElement(elementSerializer, elem)
-            } catch (_: Exception) {
-                defaultValue()
-            }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> {
+        val result = elementDe.deserializeAs(deserializer)
+        return if (result.isSuccess) {
+            result
         } else {
-            try {
-                elementSerializer.deserialize(decoder)
-            } catch (_: Exception) {
-                defaultValue()
-            }
+            SerdeResult.success(defaultValue())
         }
+    }
 }
 
 /**
- * Returns a default value if the serialized value is null or missing.
+ * Returns a default value if the deserialized value is null or missing.
  */
-class DefaultOnNullSerializer<T>(
-    private val elementSerializer: KSerializer<T>,
+class DefaultOnNull<T>(
+    private val elementAs: SerializeAs<T?>,
+    private val elementDe: DeserializeAs<T?>,
     private val defaultValue: () -> T,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor = elementSerializer.descriptor
+) : SerializeAs<T?>,
+    DeserializeAs<T> {
+    override fun <Ok> serializeAs(source: T?, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        elementAs.serializeAs(source, serializer)
 
-    override fun serialize(encoder: Encoder, value: T) {
-        elementSerializer.serialize(encoder, value)
-    }
-
-    override fun deserialize(decoder: Decoder): T {
-        if (decoder is JsonDecoder) {
-            val elem = decoder.decodeJsonElement()
-            if (elem is JsonNull) {
-                return defaultValue()
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> {
+        val result = elementDe.deserializeAs(deserializer)
+        return if (result.isSuccess) {
+            val v = result.getOrThrow()
+            if (v != null) {
+                SerdeResult.success(v)
+            } else {
+                SerdeResult.success(defaultValue())
             }
-            return decoder.json.decodeFromJsonElement(elementSerializer, elem)
-        }
-        return try {
-            elementSerializer.deserialize(decoder)
-        } catch (_: Exception) {
-            defaultValue()
+        } else {
+            SerdeResult.success(defaultValue())
         }
     }
 }

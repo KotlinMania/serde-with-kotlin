@@ -14,23 +14,23 @@ class Base64Test {
                 byteArrayOf(0, 1, 2, 13),
                 byteArrayOf(14, 5, 6, 7),
             )
-        val encodedPadded = checkEqual.map { Base64Codec.encode(it, StandardAlphabet, padded = true) }
+        val encodedPadded = checkEqual.map { Base64Codec.encode(it, Base64Alphabet.Standard, padded = true) }
         assertEquals(listOf("AAECDQ==", "DgUGBw=="), encodedPadded)
 
-        val encodedUnpadded = checkEqual.map { Base64Codec.encode(it, StandardAlphabet, padded = false) }
+        val encodedUnpadded = checkEqual.map { Base64Codec.encode(it, Base64Alphabet.Standard, padded = false) }
         assertEquals(listOf("AAECDQ", "DgUGBw"), encodedUnpadded)
 
         val checkDeserFrom = listOf("qrz/", "4H0=", "4H0")
-        val decoded = checkDeserFrom.map { Base64Codec.decode(it, StandardAlphabet) }
+        val decoded = checkDeserFrom.map { Base64Codec.decode(it, Base64Alphabet.Standard) }
         assertContentEquals(byteArrayOf(0xaa.toByte(), 0xbc.toByte(), 0xff.toByte()), decoded[0])
         assertContentEquals(byteArrayOf(0xe0.toByte(), 0x7d.toByte()), decoded[1])
         assertContentEquals(byteArrayOf(0xe0.toByte(), 0x7d.toByte()), decoded[2])
 
         assertFailsWith<Exception> {
-            Base64Codec.decode("0", StandardAlphabet)
+            Base64Codec.decode("0", Base64Alphabet.Standard)
         }
         assertFailsWith<Exception> {
-            Base64Codec.decode("zz", StandardAlphabet)
+            Base64Codec.decode("zz", Base64Alphabet.Standard)
         }
     }
 
@@ -89,50 +89,50 @@ class Base64Test {
                 0x00.toByte(),
             )
 
-        val standard = Base64Codec.encode(bytes, StandardAlphabet, padded = true)
+        val standard = Base64Codec.encode(bytes, Base64Alphabet.Standard, padded = true)
         assertEquals("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/AA==", standard)
 
-        val urlSafe = Base64Codec.encode(bytes, UrlSafeAlphabet, padded = true)
+        val urlSafe = Base64Codec.encode(bytes, Base64Alphabet.UrlSafe, padded = true)
         assertEquals("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_AA==", urlSafe)
 
-        val crypt = Base64Codec.encode(bytes, CryptAlphabet, padded = true)
+        val crypt = Base64Codec.encode(bytes, Base64Alphabet.Crypt, padded = true)
         assertEquals("OPQRSTUVWXYZabcdefghijklmn./0123456789ABCDEFGHIJKLMNopqrstuvwxyz..==", crypt)
 
-        val bcrypt = Base64Codec.encode(bytes, BcryptAlphabet, padded = true)
+        val bcrypt = Base64Codec.encode(bytes, Base64Alphabet.Bcrypt, padded = true)
         assertEquals("YZabcdefghijklmnopqrstuvwx./ABCDEFGHIJKLMNOPQRSTUVWXyz0123456789..==", bcrypt)
 
-        val imap = Base64Codec.encode(bytes, ImapMutf7Alphabet, padded = true)
+        val imap = Base64Codec.encode(bytes, Base64Alphabet.ImapMutf7, padded = true)
         assertEquals("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+,AA==", imap)
 
-        val binHex = Base64Codec.encode(bytes, BinHexAlphabet, padded = true)
+        val binHex = Base64Codec.encode(bytes, Base64Alphabet.BinHex, padded = true)
         assertEquals("DEFGHIJKLMNPQRSTUVXYZ[`abc!\"#$%&'()*+,-012345689@ABCdefhijklmpqr!!==", binHex)
     }
 
     @Test
     fun testBase64Standard() {
         val input = "Hello World".encodeToByteArray()
-        val encoded = Base64Codec.encode(input, StandardAlphabet, padded = true)
+        val encoded = Base64Codec.encode(input, Base64Alphabet.Standard, padded = true)
         assertEquals("SGVsbG8gV29ybGQ=", encoded)
 
-        val decoded = Base64Codec.decode(encoded, StandardAlphabet)
+        val decoded = Base64Codec.decode(encoded, Base64Alphabet.Standard)
         assertContentEquals(input, decoded)
     }
 
     @Test
     fun testBase64Unpadded() {
         val input = "Hello World".encodeToByteArray()
-        val encoded = Base64Codec.encode(input, StandardAlphabet, padded = false)
+        val encoded = Base64Codec.encode(input, Base64Alphabet.Standard, padded = false)
         assertEquals("SGVsbG8gV29ybGQ", encoded)
 
-        val decoded = Base64Codec.decode(encoded, StandardAlphabet)
+        val decoded = Base64Codec.decode(encoded, Base64Alphabet.Standard)
         assertContentEquals(input, decoded)
     }
 
     @Test
     fun testBase64UrlSafe() {
         val input = byteArrayOf(251.toByte(), 240.toByte(), 239.toByte())
-        val encoded = Base64Codec.encode(input, UrlSafeAlphabet, padded = false)
-        val decoded = Base64Codec.decode(encoded, UrlSafeAlphabet)
+        val encoded = Base64Codec.encode(input, Base64Alphabet.UrlSafe, padded = false)
+        val decoded = Base64Codec.decode(encoded, Base64Alphabet.UrlSafe)
         assertContentEquals(input, decoded)
     }
 }

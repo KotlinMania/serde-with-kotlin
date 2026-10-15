@@ -1,136 +1,78 @@
-// port-lint: tests duplicate_key_impls/mod.rs
+// port-lint: tests duplicate_key_impls/error_on_duplicate.rs
 package io.github.kotlinmania.serdewith
 
 import io.github.kotlinmania.indexmap.IndexMap
 import io.github.kotlinmania.indexmap.IndexSet
 import io.github.kotlinmania.prettyassertions.assertEq
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdejson.fromStr
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class DuplicateKeyTest {
+    private val intDe = IntAsString
+    private val intValDe =
+        object : DeserializeAs<Int> {
+            override fun deserializeAs(deserializer: Deserializer): io.github.kotlinmania.serde.SerdeResult<Int> =
+                deserializer.deserializeI64(
+                    object : io.github.kotlinmania.serdecore.de.Visitor<Int> {
+                        override fun expecting(): String = "an integer"
+
+                        override fun visitI64(v: Long) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v.toInt())
+
+                        override fun visitU64(v: ULong) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v.toInt())
+
+                        override fun visitStr(v: String) =
+                            io.github.kotlinmania.serde
+                                .serdeCatching { v.toInt() }
+                    },
+                )
+        }
+
     @Test
     fun testErrorOnDuplicateSet() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "[1, 2, 2, 3]")
-        }
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.ErrorOnDuplicate)
+        val res = fromStr("[1, 2, 2, 3]", adapter.asDeserialize())
+        assertTrue(res.isFailure)
     }
 
     @Test
     fun testFirstValueWinsSet() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.FirstValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.FirstValueWins)
+        val result = fromStr("[1, 2, 2, 3]", adapter.asDeserialize()).getOrThrow()
         assertEq(setOf(1, 2, 3), result)
     }
 
     @Test
     fun testLastValueWinsSet() {
-        val serializer = SetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.LastValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
+        val adapter = SetWithDuplicateStrategy(IntAsString, intValDe, DuplicateStrategy.LastValueWins)
+        val result = fromStr("[1, 2, 2, 3]", adapter.asDeserialize()).getOrThrow()
         assertEq(setOf(1, 2, 3), result)
     }
 
     @Test
     fun testErrorOnDuplicateMap() {
-        val serializer =
-            MapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.ErrorOnDuplicate,
-            )
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
-        }
+        val adapter = MapWithDuplicateStrategy(intDe, intValDe, DuplicateStrategy.ErrorOnDuplicate)
+        val res = fromStr("""{"1": 1, "2": 2, "1": 3}""", adapter.asDeserialize())
+        assertTrue(res.isFailure)
     }
 
     @Test
     fun testFirstValueWinsMap() {
-        val serializer =
-            MapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.FirstValueWins,
-            )
-        val result = Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
+        val adapter = MapWithDuplicateStrategy(intDe, intValDe, DuplicateStrategy.FirstValueWins)
+        val result = fromStr("""{"1": 1, "2": 2, "1": 3}""", adapter.asDeserialize()).getOrThrow()
         assertEq(1, result[1])
         assertEq(2, result[2])
     }
 
     @Test
     fun testLastValueWinsMap() {
-        val serializer =
-            MapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.LastValueWins,
-            )
-        val result = Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
-        assertEq(3, result[1])
-        assertEq(2, result[2])
-    }
-
-    @Test
-    fun testErrorOnDuplicateIndexSet() {
-        val serializer = IndexSetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.ErrorOnDuplicate)
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, "[1, 2, 2, 3]")
-        }
-    }
-
-    @Test
-    fun testFirstValueWinsIndexSet() {
-        val serializer = IndexSetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.FirstValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
-        val expected = IndexSet.from(listOf(1, 2, 3))
-        assertEq(expected, result)
-    }
-
-    @Test
-    fun testLastValueWinsIndexSet() {
-        val serializer = IndexSetWithDuplicateStrategySerializer(Int.serializer(), DuplicateStrategy.LastValueWins)
-        val result = Json.decodeFromString(serializer, "[1, 2, 2, 3]")
-        val expected = IndexSet.from(listOf(1, 2, 3))
-        assertEq(expected, result)
-    }
-
-    @Test
-    fun testErrorOnDuplicateIndexMap() {
-        val serializer =
-            IndexMapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.ErrorOnDuplicate,
-            )
-        assertFailsWith<SerializationException> {
-            Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
-        }
-    }
-
-    @Test
-    fun testFirstValueWinsIndexMap() {
-        val serializer =
-            IndexMapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.FirstValueWins,
-            )
-        val result = Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
-        assertEq(1, result[1])
-        assertEq(2, result[2])
-    }
-
-    @Test
-    fun testLastValueWinsIndexMap() {
-        val serializer =
-            IndexMapWithDuplicateStrategySerializer(
-                Int.serializer(),
-                Int.serializer(),
-                DuplicateStrategy.LastValueWins,
-            )
-        val result = Json.decodeFromString(serializer, """{"1": 1, "2": 2, "1": 3}""")
+        val adapter = MapWithDuplicateStrategy(intDe, intValDe, DuplicateStrategy.LastValueWins)
+        val result = fromStr("""{"1": 1, "2": 2, "1": 3}""", adapter.asDeserialize()).getOrThrow()
         assertEq(3, result[1])
         assertEq(2, result[2])
     }

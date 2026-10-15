@@ -1,16 +1,19 @@
-// port-lint: source duplicate_key_impls/mod.rs
+// port-lint: source duplicate_key_impls/error_on_duplicate.rs
 package io.github.kotlinmania.serdewith
 
 import io.github.kotlinmania.indexmap.IndexMap
 import io.github.kotlinmania.indexmap.IndexSet
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.DeserializeSeed
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.SeqAccess
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.SerializeMap
+import io.github.kotlinmania.serdecore.ser.SerializeSeq
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * Strategy for handling duplicate keys or set elements during deserialization.
@@ -47,179 +50,6 @@ interface PreventDuplicateInsertsMap<K, V> {
  */
 interface DuplicateInsertsFirstWinsMap<K, V> {
     fun insert(key: K, value: V)
-}
-
-/**
- * Serializer for [Set] that applies duplicate handling strategies.
- */
-class SetWithDuplicateStrategySerializer<T>(
-    private val elementSerializer: KSerializer<T>,
-    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
-) : KSerializer<Set<T>> {
-    private val listSerializer = ListSerializer(elementSerializer)
-    override val descriptor: SerialDescriptor = listSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: Set<T>) {
-        listSerializer.serialize(encoder, value.toList())
-    }
-
-    override fun deserialize(decoder: Decoder): Set<T> {
-        val list = listSerializer.deserialize(decoder)
-        val result = mutableSetOf<T>()
-        for (item in list) {
-            when (strategy) {
-                DuplicateStrategy.ErrorOnDuplicate -> {
-                    if (!result.add(item)) {
-                        throw SerializationException("Duplicate element found in set: $item")
-                    }
-                }
-
-                DuplicateStrategy.FirstValueWins -> {
-                    result.add(item)
-                }
-
-                DuplicateStrategy.LastValueWins -> {
-                    result.remove(item)
-                    result.add(item)
-                }
-            }
-        }
-        return result
-    }
-}
-
-/**
- * Serializer for [Map] that applies duplicate key handling strategies.
- */
-class MapWithDuplicateStrategySerializer<K, V>(
-    private val keySerializer: KSerializer<K>,
-    private val valueSerializer: KSerializer<V>,
-    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
-) : KSerializer<Map<K, V>> {
-    private val mapSerializer = MapSerializer(keySerializer, valueSerializer)
-    override val descriptor: SerialDescriptor = mapSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: Map<K, V>) {
-        mapSerializer.serialize(encoder, value)
-    }
-
-    override fun deserialize(decoder: Decoder): Map<K, V> {
-        val composite = decoder.beginStructure(descriptor)
-        val result = mutableMapOf<K, V>()
-        while (true) {
-            val keyIndex = composite.decodeElementIndex(descriptor)
-            if (keyIndex == CompositeDecoder.DECODE_DONE) break
-            val key = composite.decodeSerializableElement(descriptor, keyIndex, keySerializer)
-            val valIndex = composite.decodeElementIndex(descriptor)
-            val value = composite.decodeSerializableElement(descriptor, valIndex, valueSerializer)
-            when (strategy) {
-                DuplicateStrategy.ErrorOnDuplicate -> {
-                    if (result.containsKey(key)) {
-                        throw SerializationException("Duplicate key found in map: $key")
-                    }
-                    result[key] = value
-                }
-
-                DuplicateStrategy.FirstValueWins -> {
-                    if (!result.containsKey(key)) {
-                        result[key] = value
-                    }
-                }
-
-                DuplicateStrategy.LastValueWins -> {
-                    result[key] = value
-                }
-            }
-        }
-        composite.endStructure(descriptor)
-        return result
-    }
-}
-
-/**
- * Serializer for [IndexSet] that applies duplicate handling strategies.
- */
-class IndexSetWithDuplicateStrategySerializer<T>(
-    private val elementSerializer: KSerializer<T>,
-    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
-) : KSerializer<IndexSet<T>> {
-    private val listSerializer = ListSerializer(elementSerializer)
-    override val descriptor: SerialDescriptor = listSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: IndexSet<T>) {
-        listSerializer.serialize(encoder, value.toList())
-    }
-
-    override fun deserialize(decoder: Decoder): IndexSet<T> {
-        val list = listSerializer.deserialize(decoder)
-        val result = IndexSet.new<T>()
-        for (item in list) {
-            when (strategy) {
-                DuplicateStrategy.ErrorOnDuplicate -> {
-                    if (!result.insert(item)) {
-                        throw SerializationException("Duplicate element found in set: $item")
-                    }
-                }
-
-                DuplicateStrategy.FirstValueWins -> {
-                    result.insert(item)
-                }
-
-                DuplicateStrategy.LastValueWins -> {
-                    result.replace(item)
-                }
-            }
-        }
-        return result
-    }
-}
-
-/**
- * Serializer for [IndexMap] that applies duplicate key handling strategies.
- */
-class IndexMapWithDuplicateStrategySerializer<K, V>(
-    private val keySerializer: KSerializer<K>,
-    private val valueSerializer: KSerializer<V>,
-    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
-) : KSerializer<IndexMap<K, V>> {
-    private val mapSerializer = MapSerializer(keySerializer, valueSerializer)
-    override val descriptor: SerialDescriptor = mapSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: IndexMap<K, V>) {
-        mapSerializer.serialize(encoder, value.asEntries().toMap())
-    }
-
-    override fun deserialize(decoder: Decoder): IndexMap<K, V> {
-        val composite = decoder.beginStructure(descriptor)
-        val result = IndexMap.new<K, V>()
-        while (true) {
-            val keyIndex = composite.decodeElementIndex(descriptor)
-            if (keyIndex == CompositeDecoder.DECODE_DONE) break
-            val key = composite.decodeSerializableElement(descriptor, keyIndex, keySerializer)
-            val valIndex = composite.decodeElementIndex(descriptor)
-            val value = composite.decodeSerializableElement(descriptor, valIndex, valueSerializer)
-            when (strategy) {
-                DuplicateStrategy.ErrorOnDuplicate -> {
-                    if (result.containsKey(key)) {
-                        throw SerializationException("Duplicate key found in map: $key")
-                    }
-                    result.insert(key, value)
-                }
-
-                DuplicateStrategy.FirstValueWins -> {
-                    if (!result.containsKey(key)) {
-                        result.insert(key, value)
-                    }
-                }
-
-                DuplicateStrategy.LastValueWins -> {
-                    result.insert(key, value)
-                }
-            }
-        }
-        composite.endStructure(descriptor)
-        return result
-    }
 }
 
 /**
@@ -269,5 +99,153 @@ class DuplicateInsertsFirstWinsIndexMap<K, V>(
         if (!map.containsKey(key)) {
             map.insert(key, value)
         }
+    }
+}
+
+/**
+ * Serializer for [Set] that applies duplicate handling strategies using Serde.
+ */
+class SetWithDuplicateStrategy<T>(
+    private val elementAs: SerializeAs<T>? = null,
+    private val elementDe: DeserializeAs<T>? = null,
+    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
+) : SerializeAs<Set<T>>,
+    DeserializeAs<Set<T>> {
+    override fun <Ok> serializeAs(source: Set<T>, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val seqResult = serializer.serializeSeq(source.size)
+        if (seqResult.isFailure) return SerdeResult.failure(seqResult.unwrapErr())
+        val seq: SerializeSeq<Ok> = seqResult.getOrThrow()
+        for (item in source) {
+            val ser =
+                if (elementAs != null) {
+                    SerializeAsWrap(item, elementAs)
+                } else if (item is Serialize) {
+                    item
+                } else {
+                    SerializePrimitive(item)
+                }
+            val res = seq.serializeElement(ser)
+            if (res.isFailure) return SerdeResult.failure(res.unwrapErr())
+        }
+        return seq.end()
+    }
+
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Set<T>> {
+        val de = elementDe ?: return SerdeResult.failure(SerdeError.custom("Missing element deserializer"))
+        val seed =
+            object : DeserializeSeed<T> {
+                override fun <D> deserialize(deserializer: D): SerdeResult<T> where D : Deserializer =
+                    de.deserializeAs(deserializer)
+            }
+
+        return deserializer.deserializeSeq(
+            object : Visitor<Set<T>> {
+                override fun expecting(): String = "a sequence for set"
+
+                override fun <A> visitSeq(access: A): SerdeResult<Set<T>> where A : SeqAccess {
+                    val result = mutableSetOf<T>()
+                    while (true) {
+                        val elemResult = access.nextElementSeed(seed)
+                        if (elemResult.isFailure) return SerdeResult.failure(elemResult.unwrapErr())
+                        val item = elemResult.getOrThrow() ?: break
+                        when (strategy) {
+                            DuplicateStrategy.ErrorOnDuplicate -> {
+                                if (!result.add(item)) {
+                                    return SerdeResult.failure(SerdeError.custom("Duplicate element found in set: $item"))
+                                }
+                            }
+
+                            DuplicateStrategy.FirstValueWins -> {
+                                result.add(item)
+                            }
+
+                            DuplicateStrategy.LastValueWins -> {
+                                result.remove(item)
+                                result.add(item)
+                            }
+                        }
+                    }
+                    return SerdeResult.success(result)
+                }
+            },
+        )
+    }
+}
+
+/**
+ * Serializer for [Map] that applies duplicate key handling strategies using Serde.
+ */
+class MapWithDuplicateStrategy<K, V>(
+    private val keyDe: DeserializeAs<K>? = null,
+    private val valDe: DeserializeAs<V>? = null,
+    private val strategy: DuplicateStrategy = DuplicateStrategy.ErrorOnDuplicate,
+) : SerializeAs<Map<K, V>>,
+    DeserializeAs<Map<K, V>> {
+    override fun <Ok> serializeAs(source: Map<K, V>, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val mapResult = serializer.serializeMap(source.size)
+        if (mapResult.isFailure) return SerdeResult.failure(mapResult.unwrapErr())
+        val map: SerializeMap<Ok> = mapResult.getOrThrow()
+        for ((k, v) in source) {
+            val kSer = if (k is Serialize) k else SerializePrimitive(k)
+            val kRes = map.serializeKey(kSer)
+            if (kRes.isFailure) return SerdeResult.failure(kRes.unwrapErr())
+            val vSer = if (v is Serialize) v else SerializePrimitive(v)
+            val vRes = map.serializeValue(vSer)
+            if (vRes.isFailure) return SerdeResult.failure(vRes.unwrapErr())
+        }
+        return map.end()
+    }
+
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<Map<K, V>> {
+        val kde = keyDe ?: return SerdeResult.failure(SerdeError.custom("Missing key deserializer"))
+        val vde = valDe ?: return SerdeResult.failure(SerdeError.custom("Missing value deserializer"))
+
+        val kSeed =
+            object : DeserializeSeed<K> {
+                override fun <D> deserialize(deserializer: D): SerdeResult<K> where D : Deserializer =
+                    kde.deserializeAs(deserializer)
+            }
+        val vSeed =
+            object : DeserializeSeed<V> {
+                override fun <D> deserialize(deserializer: D): SerdeResult<V> where D : Deserializer =
+                    vde.deserializeAs(deserializer)
+            }
+
+        return deserializer.deserializeMap(
+            object : Visitor<Map<K, V>> {
+                override fun expecting(): String = "a map"
+
+                override fun <A> visitMap(access: A): SerdeResult<Map<K, V>> where A : MapAccess {
+                    val result = mutableMapOf<K, V>()
+                    while (true) {
+                        val keyResult = access.nextKeySeed(kSeed)
+                        if (keyResult.isFailure) return SerdeResult.failure(keyResult.unwrapErr())
+                        val key = keyResult.getOrThrow() ?: break
+                        val valResult = access.nextValueSeed(vSeed)
+                        if (valResult.isFailure) return SerdeResult.failure(valResult.unwrapErr())
+                        val value = valResult.getOrThrow()
+                        when (strategy) {
+                            DuplicateStrategy.ErrorOnDuplicate -> {
+                                if (result.containsKey(key)) {
+                                    return SerdeResult.failure(SerdeError.custom("Duplicate key found in map: $key"))
+                                }
+                                result[key] = value
+                            }
+
+                            DuplicateStrategy.FirstValueWins -> {
+                                if (!result.containsKey(key)) {
+                                    result[key] = value
+                                }
+                            }
+
+                            DuplicateStrategy.LastValueWins -> {
+                                result[key] = value
+                            }
+                        }
+                    }
+                    return SerdeResult.success(result)
+                }
+            },
+        )
     }
 }

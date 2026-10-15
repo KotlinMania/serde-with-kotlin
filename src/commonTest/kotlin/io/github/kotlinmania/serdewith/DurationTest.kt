@@ -1,7 +1,8 @@
-// port-lint: tests utils/duration.rs
+// port-lint: tests utils.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.json.Json
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
@@ -11,45 +12,45 @@ import kotlin.time.Instant
 class DurationTest {
     @Test
     fun testDurationSecondsSerializer() {
-        val json = Json { prettyPrint = false }
         val duration = 42.seconds
-        val encoded = json.encodeToString(DurationSecondsSerializer, duration)
+        val wrap = SerializeAsWrap(duration, DurationSeconds)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("42", encoded)
 
-        val decoded = json.decodeFromString(DurationSecondsSerializer, encoded)
+        val decoded = fromStr(encoded, DurationSeconds.asDeserialize()).getOrThrow()
         assertEquals(duration, decoded)
     }
 
     @Test
     fun testDurationMillisSerializer() {
-        val json = Json { prettyPrint = false }
         val duration = 1500.milliseconds
-        val encoded = json.encodeToString(DurationMillisSerializer, duration)
+        val wrap = SerializeAsWrap(duration, DurationMillis)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("1500", encoded)
 
-        val decoded = json.decodeFromString(DurationMillisSerializer, encoded)
+        val decoded = fromStr(encoded, DurationMillis.asDeserialize()).getOrThrow()
         assertEquals(duration, decoded)
     }
 
     @Test
     fun testTimestampSecondsSerializer() {
-        val json = Json { prettyPrint = false }
         val instant = Instant.fromEpochSeconds(1609459200)
-        val encoded = json.encodeToString(TimestampSecondsSerializer, instant)
+        val wrap = SerializeAsWrap(instant, TimestampSeconds)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("1609459200", encoded)
 
-        val decoded = json.decodeFromString(TimestampSecondsSerializer, encoded)
+        val decoded = fromStr(encoded, TimestampSeconds.asDeserialize()).getOrThrow()
         assertEquals(instant, decoded)
     }
 
     @Test
     fun testTimestampMillisSerializer() {
-        val json = Json { prettyPrint = false }
         val instant = Instant.fromEpochMilliseconds(1609459200123L)
-        val encoded = json.encodeToString(TimestampMillisSerializer, instant)
+        val wrap = SerializeAsWrap(instant, TimestampMillis)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("1609459200123", encoded)
 
-        val decoded = json.decodeFromString(TimestampMillisSerializer, encoded)
+        val decoded = fromStr(encoded, TimestampMillis.asDeserialize()).getOrThrow()
         assertEquals(instant, decoded)
     }
 

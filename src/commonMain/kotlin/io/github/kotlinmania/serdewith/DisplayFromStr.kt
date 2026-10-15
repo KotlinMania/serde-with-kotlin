@@ -1,126 +1,54 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
- * Serializes and deserializes values via their string representations.
+ * Serializes and deserializes values via their string representations using Serde.
  */
-open class DisplayFromStrSerializer<T>(
-    serialName: String,
-    private val toStr: (T) -> String,
+open class DisplayFromStr<T>(
     private val fromStr: (String) -> T,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(serialName, PrimitiveKind.STRING)
+    private val toStr: (T) -> String = { it.toString() },
+) : SerializeAs<T>,
+    DeserializeAs<T> {
+    override fun <Ok> serializeAs(source: T, serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeStr(toStr(source))
 
-    override fun serialize(encoder: Encoder, value: T) {
-        encoder.encodeString(toStr(value))
-    }
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> =
+        deserializer.deserializeStr(
+            object : Visitor<T> {
+                override fun expecting(): String = "a string"
 
-    override fun deserialize(decoder: Decoder): T = fromStr(decoder.decodeString())
+                override fun visitStr(v: String): SerdeResult<T> =
+                    serdeCatching {
+                        fromStr(v)
+                    }
+            },
+        )
 }
 
-/**
- * Serializes an [Int] as a string.
- */
-object IntAsStringSerializer : DisplayFromStrSerializer<Int>(
-    "io.github.kotlinmania.serdewith.IntAsString",
-    { it.toString() },
-    { it.toInt() },
-)
+/** Predefined DisplayFromStr adapters for standard types. */
+object IntAsString : DisplayFromStr<Int>({ it.toInt() })
 
-/**
- * Serializes a [Long] as a string.
- */
-object LongAsStringSerializer : DisplayFromStrSerializer<Long>(
-    "io.github.kotlinmania.serdewith.LongAsString",
-    { it.toString() },
-    { it.toLong() },
-)
+object LongAsString : DisplayFromStr<Long>({ it.toLong() })
 
-/**
- * Serializes a [Short] as a string.
- */
-object ShortAsStringSerializer : DisplayFromStrSerializer<Short>(
-    "io.github.kotlinmania.serdewith.ShortAsString",
-    { it.toString() },
-    { it.toShort() },
-)
+object ShortAsString : DisplayFromStr<Short>({ it.toShort() })
 
-/**
- * Serializes a [Byte] as a string.
- */
-object ByteAsStringSerializer : DisplayFromStrSerializer<Byte>(
-    "io.github.kotlinmania.serdewith.ByteAsString",
-    { it.toString() },
-    { it.toByte() },
-)
+object ByteAsString : DisplayFromStr<Byte>({ it.toByte() })
 
-/**
- * Serializes a [Double] as a string.
- */
-object DoubleAsStringSerializer : DisplayFromStrSerializer<Double>(
-    "io.github.kotlinmania.serdewith.DoubleAsString",
-    { it.toString() },
-    { it.toDouble() },
-)
+object DoubleAsString : DisplayFromStr<Double>({ it.toDouble() })
 
-/**
- * Serializes a [Float] as a string.
- */
-object FloatAsStringSerializer : DisplayFromStrSerializer<Float>(
-    "io.github.kotlinmania.serdewith.FloatAsString",
-    { it.toString() },
-    { it.toFloat() },
-)
+object FloatAsString : DisplayFromStr<Float>({ it.toFloat() })
 
-/**
- * Serializes a [Boolean] as a string.
- */
-object BooleanAsStringSerializer : DisplayFromStrSerializer<Boolean>(
-    "io.github.kotlinmania.serdewith.BooleanAsString",
-    { it.toString() },
-    { it.toBooleanStrict() },
-)
+object BooleanAsString : DisplayFromStr<Boolean>({ it.toBooleanStrict() })
 
-/**
- * Serializes a [UInt] as a string.
- */
-object UIntAsStringSerializer : DisplayFromStrSerializer<UInt>(
-    "io.github.kotlinmania.serdewith.UIntAsString",
-    { it.toString() },
-    { it.toUInt() },
-)
+object UIntAsString : DisplayFromStr<UInt>({ it.toUInt() })
 
-/**
- * Serializes a [ULong] as a string.
- */
-object ULongAsStringSerializer : DisplayFromStrSerializer<ULong>(
-    "io.github.kotlinmania.serdewith.ULongAsString",
-    { it.toString() },
-    { it.toULong() },
-)
+object ULongAsString : DisplayFromStr<ULong>({ it.toULong() })
 
-/**
- * Serializes a [UShort] as a string.
- */
-object UShortAsStringSerializer : DisplayFromStrSerializer<UShort>(
-    "io.github.kotlinmania.serdewith.UShortAsString",
-    { it.toString() },
-    { it.toUShort() },
-)
+object UShortAsString : DisplayFromStr<UShort>({ it.toUShort() })
 
-/**
- * Serializes a [UByte] as a string.
- */
-object UByteAsStringSerializer : DisplayFromStrSerializer<UByte>(
-    "io.github.kotlinmania.serdewith.UByteAsString",
-    { it.toString() },
-    { it.toUByte() },
-)
+object UByteAsString : DisplayFromStr<UByte>({ it.toUByte() })

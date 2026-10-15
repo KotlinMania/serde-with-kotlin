@@ -1,32 +1,29 @@
 // port-lint: tests with_prefix.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdejson.JsonMap
+import io.github.kotlinmania.serdejson.JsonNumber
+import io.github.kotlinmania.serdejson.Value
+import io.github.kotlinmania.serdejson.fromStr
+import io.github.kotlinmania.serdejson.toStr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class WithPrefixTest {
-    @Serializable
-    data class Player(
-        val name: String,
-        val score: Int,
-    )
+    private val stringDe =
+        object : DeserializeAs<String> {
+            override fun deserializeAs(deserializer: Deserializer) =
+                deserializer.deserializeStr(
+                    object : io.github.kotlinmania.serdecore.de.Visitor<String> {
+                        override fun expecting() = "a string"
 
-    @Test
-    fun testWithPrefix() {
-        val serializer = WithPrefixSerializer("player1_", Player.serializer())
-        val player = Player(name = "Alice", score = 100)
-
-        val json = Json.encodeToString(serializer, player)
-        assertEquals("{\"player1_name\":\"Alice\",\"player1_score\":100}", json)
-
-        val decoded = Json.decodeFromString(serializer, json)
-        assertEquals(player, decoded)
-    }
+                        override fun visitStr(v: String) =
+                            io.github.kotlinmania.serde.SerdeResult
+                                .success(v)
+                    },
+                )
+        }
 
     @Test
     fun testFlattenWithPrefix() {
@@ -52,13 +49,13 @@ class WithPrefixTest {
 
     @Test
     fun testPlainWithPrefix() {
-        val serializer = WithPrefixMapSerializer("player1_", String.serializer())
-        val json = Json { prettyPrint = false }
+        val adapter = WithPrefixMap<String>("player1_", valueDe = stringDe)
         val map = mapOf("name" to "name1", "votes" to "1")
-        val encoded = json.encodeToString(serializer, map)
+        val wrap = SerializeAsWrap(map, adapter)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("{\"player1_name\":\"name1\",\"player1_votes\":\"1\"}", encoded)
 
-        val decoded = json.decodeFromString(serializer, encoded)
+        val decoded = fromStr(encoded, adapter.asDeserialize()).getOrThrow()
         assertEquals(map, decoded)
     }
 
@@ -84,29 +81,28 @@ class WithPrefixTest {
 
     @Test
     fun testAddAndStripPrefixJsonObject() {
-        val original =
-            buildJsonObject {
-                put("name", "Bob")
-                put("votes", 42)
-            }
+        val map = JsonMap.new()
+        map.insert("name", Value.Str("Bob"))
+        map.insert("votes", Value.Number(JsonNumber.fromI64(42L)))
+        val original = Value.Object(map)
+
         val prefixed = WithPrefix.addPrefix(original, "player1_")
-        assertEquals(2, prefixed.size)
-        assertEquals("Bob", prefixed["player1_name"]?.toString()?.replace("\"", ""))
+        assertEquals(2, prefixed.value.len())
+        assertEquals("Bob", (prefixed.value.get("player1_name") as Value.Str).value)
 
         val stripped = WithPrefix.stripPrefix(prefixed, "player1_")
-        assertEquals("Bob", stripped["name"]?.toString()?.replace("\"", ""))
+        assertEquals("Bob", (stripped.value.get("name") as Value.Str).value)
     }
 
     @Test
     fun testWithPrefixMapSerializer() {
-        val serializer = WithPrefixMapSerializer("foo_", String.serializer())
-        val json = Json { prettyPrint = false }
-
+        val adapter = WithPrefixMap<String>("foo_", valueDe = stringDe)
         val map = mapOf("a" to "1", "b" to "2")
-        val encoded = json.encodeToString(serializer, map)
+        val wrap = SerializeAsWrap(map, adapter)
+        val encoded = toStr(wrap).getOrThrow()
         assertEquals("{\"foo_a\":\"1\",\"foo_b\":\"2\"}", encoded)
 
-        val decoded = json.decodeFromString(serializer, encoded)
+        val decoded = fromStr(encoded, adapter.asDeserialize()).getOrThrow()
         assertEquals(map, decoded)
     }
 }

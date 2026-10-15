@@ -1,8 +1,7 @@
-// port-lint: source lib.rs
 package io.github.kotlinmania.serdewith
 
 /**
- * Module descriptor for SerdeWith library.
+ * Library metadata and version constants for SerdeWith.
  */
 object SerdeWithLib {
     const val VERSION: String = "3.17.0"

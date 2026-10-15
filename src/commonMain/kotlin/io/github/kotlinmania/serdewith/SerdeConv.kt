@@ -1,50 +1,54 @@
 // port-lint: source serde_conv.rs
 package io.github.kotlinmania.serdewith
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
- * Creates custom conversion adapters from functions.
+ * Creates custom conversion adapters from functions using Serde.
  *
  * Maps a target type [T] to and from an intermediate serializable type [Intermediate].
- *
- * @param intermediateSerializer The serializer for the intermediate representation.
- * @param toIntermediate Function converting [T] to [Intermediate].
- * @param fromIntermediate Function converting [Intermediate] to [T].
  */
-open class SerdeConvSerializer<T, Intermediate>(
-    private val intermediateSerializer: KSerializer<Intermediate>,
+open class SerdeConv<T, Intermediate>(
     private val toIntermediate: (T) -> Intermediate,
     private val fromIntermediate: (Intermediate) -> T,
-) : KSerializer<T> {
-    override val descriptor: SerialDescriptor = intermediateSerializer.descriptor
-
-    override fun serialize(encoder: Encoder, value: T) {
-        val intermediate = toIntermediate(value)
-        intermediateSerializer.serialize(encoder, intermediate)
+    private val intermediateAs: SerializeAs<Intermediate>? = null,
+    private val intermediateDe: DeserializeAs<Intermediate>? = null,
+) : SerializeAs<T>,
+    DeserializeAs<T> {
+    override fun <Ok> serializeAs(source: T, serializer: Serializer<Ok>): SerdeResult<Ok> {
+        val intermediate = toIntermediate(source)
+        return if (intermediateAs != null) {
+            intermediateAs.serializeAs(intermediate, serializer)
+        } else if (intermediate is Serialize) {
+            intermediate.serialize(serializer)
+        } else {
+            SerializePrimitive(intermediate).serialize(serializer)
+        }
     }
 
-    override fun deserialize(decoder: Decoder): T {
-        val intermediate = intermediateSerializer.deserialize(decoder)
-        return try {
-            fromIntermediate(intermediate)
-        } catch (e: SerializationException) {
-            throw e
-        } catch (e: Exception) {
-            throw SerializationException("Conversion failed: ${e.message}", e)
+    override fun deserializeAs(deserializer: Deserializer): SerdeResult<T> {
+        val de =
+            intermediateDe
+                ?: return SerdeResult.failure(SerdeError("Missing intermediate deserializer"))
+        val intermediateResult = de.deserializeAs(deserializer)
+        if (intermediateResult.isFailure) return SerdeResult.failure(intermediateResult.unwrapErr())
+        return serdeCatching {
+            fromIntermediate(intermediateResult.getOrThrow())
         }
     }
 }
 
 /**
- * Factory function creating a [SerdeConvSerializer] adapter.
+ * Factory function creating a [SerdeConv] adapter.
  */
 fun <T, Intermediate> serdeConv(
-    intermediateSerializer: KSerializer<Intermediate>,
     toIntermediate: (T) -> Intermediate,
     fromIntermediate: (Intermediate) -> T,
-): KSerializer<T> = SerdeConvSerializer(intermediateSerializer, toIntermediate, fromIntermediate)
+    intermediateAs: SerializeAs<Intermediate>? = null,
+    intermediateDe: DeserializeAs<Intermediate>? = null,
+): SerdeConv<T, Intermediate> = SerdeConv(toIntermediate, fromIntermediate, intermediateAs, intermediateDe)

@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 coroutines = "1.11.0"
 datetime = "0.8.0"
 collectionsImmutable = "0.5.2"
@@ -10,10 +10,10 @@ ktlintEngine = "1.8.0"
 kotlinxBenchmark = "0.5.0"
 base64-kotlin = "0.1.0"
 indexmap-kotlin = "0.1.5"
-serde-kotlin = "0.1.10"
+serde-kotlin = "0.1.11"
 serde-test-kotlin = "0.1.1"
 serde-json-kotlin = "0.1.1"
-schemars-kotlin = "0.1.2"
+schemars-kotlin = "0.1.3"
 pretty-assertions-kotlin = "0.1.0"
 glob-kotlin = "0.1.2"
 regex-kotlin = "0.1.0"
@@ -51,6 +51,7 @@ serde-with-commonMain = [
   "indexmap-kotlin",
   "serde-kotlin",
   "serde-json-kotlin",
+  "schemars-kotlin",
 ]
 serde-with-commonTest = [
   "pretty-assertions-kotlin",
